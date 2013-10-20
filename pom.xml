@@ -70,7 +70,7 @@
             <id>nexus.drkblu-release</id>
             <name>Nexus Release Repository</name>
             <url>
-                http://nexus.drkblu:8081/nexus/content/repositories/releases
+                http://nexus.drkblu:8081/nexus/content/repositories/releases 
             </url>
         </repository>
     </distributionManagement>    
