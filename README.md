@@ -149,11 +149,11 @@ now you can use xdata with maven like this in your projects:
     <dependency>
         <groupId>com.lastdigitofpi</groupId>
         <artifactId>xdata</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.1-SNAPSHOT</version>
     </dependency>
 
 If you don't use maven for your project you can also just include the
-file ./target/xdata-1.0-SNAPSHOT.jar in your project.
+file ./target/xdata-1.1-SNAPSHOT.jar in your project.
 
 example
 =======
