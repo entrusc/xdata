@@ -26,6 +26,7 @@ package com.lastdigitofpi.xdata;
  *      public static final ListDataKey&lt;Boolean&gt; MY_KEY = ListDataKey.create("mykey", Boolean.class);
  * </pre>
  * @author Florian Frankenberger
+ * @param <T>
  */
 public final class ListDataKey<T> implements Key<T> {
 

@@ -27,6 +27,7 @@ import java.util.List;
  * of data portability.
  * 
  * @author Florian Frankenberger
+ * @param <T>
  */
 public interface DataMarshaller<T> {
     

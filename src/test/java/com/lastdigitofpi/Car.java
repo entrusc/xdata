@@ -19,6 +19,7 @@
 package com.lastdigitofpi;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -29,10 +30,10 @@ import java.util.List;
  */
 public class Car {
 
-    private int wheels;
-    private float horsePower;
+    private final int wheels;
+    private final float horsePower;
     
-    private Date buildDate;
+    private final Date buildDate;
     private List<Date> checkDates = new ArrayList<Date>();
 
     public Car(int wheels, float horsePower, Date buildDate) {
@@ -54,7 +55,7 @@ public class Car {
     }
     
     public List<Date> getCheckDates() {
-        return this.checkDates;
+        return Collections.unmodifiableList(this.checkDates);
     }
 
     public void setCheckDates(List<Date> checkDates) {
@@ -89,10 +90,7 @@ public class Car {
         if (this.buildDate != other.buildDate && (this.buildDate == null || !this.buildDate.equals(other.buildDate))) {
             return false;
         }
-        if (this.checkDates != other.checkDates && (this.checkDates == null || !this.checkDates.equals(other.checkDates))) {
-            return false;
-        }
-        return true;
+        return this.checkDates == other.checkDates || (this.checkDates != null && this.checkDates.equals(other.checkDates));
     }
 
     @Override

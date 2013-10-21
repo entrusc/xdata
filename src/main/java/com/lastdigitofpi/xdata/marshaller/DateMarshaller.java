@@ -36,7 +36,7 @@ public class DateMarshaller implements DataMarshaller<Date> {
     
     @Override
     public String getDataClassName() {
-        return Date.class.getCanonicalName();
+        return "xdata.date";
     }
 
     @Override

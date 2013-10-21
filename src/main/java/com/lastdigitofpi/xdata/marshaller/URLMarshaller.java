@@ -37,7 +37,7 @@ public class URLMarshaller implements DataMarshaller<URL> {
     
     @Override
     public String getDataClassName() {
-        return URL.class.getCanonicalName();
+        return "xdata.url";
     }
 
     @Override

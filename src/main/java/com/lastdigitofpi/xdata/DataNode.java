@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class DataNode {
 
-    private Map<String, Object> data = new HashMap<String, Object>();
+    private final Map<String, Object> data = new HashMap<String, Object>();
     
     /**
      * returns the associated key (if it exists). If the key has no associated
@@ -132,7 +132,8 @@ public class DataNode {
     /**
      * checks if a value for that key exists (even if this value is null)
      * 
-     * @param META_CLASS_ID
+     * @param <T>
+     * @param key
      * @return 
      */
     public <T> boolean containsKey(Key<T> key) {

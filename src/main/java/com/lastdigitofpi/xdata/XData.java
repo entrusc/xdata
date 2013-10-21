@@ -118,8 +118,8 @@ public class XData {
     
     private static class ClassRegistry {
         private int maxId = 0;
-        private Map<String, Integer> classIds = new LinkedHashMap<String, Integer>();
-        private Map<Integer, String> idsClasses = new LinkedHashMap<Integer, String>();
+        private final Map<String, Integer> classIds = new LinkedHashMap<String, Integer>();
+        private final Map<Integer, String> idsClasses = new LinkedHashMap<Integer, String>();
         
         public int getId(String clazzCannonicalName) {
             Integer id = classIds.get(clazzCannonicalName);
@@ -482,18 +482,22 @@ public class XData {
     // --- Serializers ---
     private static class BooleanSerializer implements Serializer<Boolean> {
 
+        @Override
         public byte getSerializerId() {
             return 0x00;
         }
         
+        @Override
         public Class<Boolean> getClazz() {
             return Boolean.class;
         }
         
+        @Override
         public void serialize(Boolean object, DataOutputStream dOut) throws IOException {
             dOut.writeBoolean(object);
         }
 
+        @Override
         public Boolean deserialize(DataInputStream dIn) throws IOException {
             return dIn.readBoolean();
         }
@@ -502,18 +506,22 @@ public class XData {
     
     private static class ByteSerializer implements Serializer<Byte> {
 
+        @Override
         public byte getSerializerId() {
             return 0x01;
         }
         
+        @Override
         public Class<Byte> getClazz() {
             return Byte.class;
         }
         
+        @Override
         public void serialize(Byte object, DataOutputStream dOut) throws IOException {
             dOut.writeByte(object);
         }
 
+        @Override
         public Byte deserialize(DataInputStream dIn) throws IOException {
             return dIn.readByte();
         }
@@ -522,18 +530,22 @@ public class XData {
     
     private static class CharSerializer implements Serializer<Character> {
 
+        @Override
         public byte getSerializerId() {
             return 0x02;
         }
         
+        @Override
         public Class<Character> getClazz() {
             return Character.class;
         }
         
+        @Override
         public void serialize(Character object, DataOutputStream dOut) throws IOException {
             dOut.writeChar(object);
         }
 
+        @Override
         public Character deserialize(DataInputStream dIn) throws IOException {
             return dIn.readChar();
         }
@@ -542,18 +554,22 @@ public class XData {
     
     private static class ShortSerializer implements Serializer<Short> {
 
+        @Override
         public byte getSerializerId() {
             return 0x03;
         }
           
+        @Override
         public Class<Short> getClazz() {
             return Short.class;
         }
       
+        @Override
         public void serialize(Short object, DataOutputStream dOut) throws IOException {
             dOut.writeShort(object);
         }
 
+        @Override
         public Short deserialize(DataInputStream dIn) throws IOException {
             return dIn.readShort();
         }
@@ -562,18 +578,22 @@ public class XData {
     
     private static class IntSerializer implements Serializer<Integer> {
         
+        @Override
         public byte getSerializerId() {
             return 0x04;
         }
         
+        @Override
         public Class<Integer> getClazz() {
             return Integer.class;
         }
 
+        @Override
         public void serialize(Integer object, DataOutputStream dOut) throws IOException {
             dOut.writeInt(object);
         }
 
+        @Override
         public Integer deserialize(DataInputStream dIn) throws IOException {
             return dIn.readInt();
         }
@@ -583,18 +603,22 @@ public class XData {
     
     private static class LongSerializer implements Serializer<Long> {
         
+        @Override
         public byte getSerializerId() {
             return 0x05;
         }
         
+        @Override
         public Class<Long> getClazz() {
             return Long.class;
         }
 
+        @Override
         public void serialize(Long object, DataOutputStream dOut) throws IOException {
             dOut.writeLong(object);
         }
 
+        @Override
         public Long deserialize(DataInputStream dIn) throws IOException {
             return dIn.readLong();
         }
@@ -603,18 +627,22 @@ public class XData {
     
     private static class FloatSerializer implements Serializer<Float> {
         
+        @Override
         public byte getSerializerId() {
             return 0x06;
         }
         
+        @Override
         public Class<Float> getClazz() {
             return Float.class;
         }
 
+        @Override
         public void serialize(Float object, DataOutputStream dOut) throws IOException {
             dOut.writeFloat(object);
         }
 
+        @Override
         public Float deserialize(DataInputStream dIn) throws IOException {
             return dIn.readFloat();
         }
@@ -624,18 +652,22 @@ public class XData {
     
     private static class DoubleSerializer implements Serializer<Double> {
         
+        @Override
         public byte getSerializerId() {
             return 0x07;
         }
         
+        @Override
         public Class<Double> getClazz() {
             return Double.class;
         }
 
+        @Override
         public void serialize(Double object, DataOutputStream dOut) throws IOException {
             dOut.writeDouble(object);
         }
 
+        @Override
         public Double deserialize(DataInputStream dIn) throws IOException {
             return dIn.readDouble();
         }
@@ -644,18 +676,22 @@ public class XData {
     
     private static class StringSerializer implements Serializer<String> {
         
+        @Override
         public byte getSerializerId() {
             return 0x08;
         }
         
+        @Override
         public Class<String> getClazz() {
             return String.class;
         }
 
+        @Override
         public void serialize(String object, DataOutputStream dOut) throws IOException {
             dOut.writeUTF(object);
         }
 
+        @Override
         public String deserialize(DataInputStream dIn) throws IOException {
             return dIn.readUTF();
         }

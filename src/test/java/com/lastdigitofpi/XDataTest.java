@@ -64,6 +64,7 @@ public class XDataTest {
     private static final ListDataKey<String> KEY_STRING_LIST_NOT_NULL = ListDataKey.create("stringlist", String.class, false);
     /**
      * A simple store and retrieve test (no marshalling)
+     * @throws java.io.IOException
      */
     @Test
     public void simpleTest() throws IOException {

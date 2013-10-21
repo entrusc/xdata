@@ -21,6 +21,7 @@ package com.lastdigitofpi.xdata;
 /**
  *
  * @author Florian Frankenberger
+ * @param <T>
  */
 public interface Key<T> {
     

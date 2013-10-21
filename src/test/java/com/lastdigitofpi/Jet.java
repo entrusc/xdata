@@ -24,7 +24,7 @@ package com.lastdigitofpi;
  */
 public class Jet {
 
-    private float speed;
+    private final float speed;
 
     public Jet(float speed) {
         this.speed = speed;
@@ -50,10 +50,7 @@ public class Jet {
             return false;
         }
         final Jet other = (Jet) obj;
-        if (Float.floatToIntBits(this.speed) != Float.floatToIntBits(other.speed)) {
-            return false;
-        }
-        return true;
+        return Float.floatToIntBits(this.speed) == Float.floatToIntBits(other.speed);
     }
     
 }
