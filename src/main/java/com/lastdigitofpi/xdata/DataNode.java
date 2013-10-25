@@ -168,8 +168,62 @@ public class DataNode {
         return data.keySet();
     }
     
+    /**
+     * returns a shallow copy of this object meaning that
+     * all lists and data nodes are new instances but the
+     * objects in the data nodes/lists are the same.
+     * 
+     * @return 
+     */
+    public DataNode copy() {
+        return (DataNode) copy(this);
+    }
+    
+    private Object copy(Object object) {
+        if (object instanceof List) {
+            final List<Object> list = (List<Object>) object;
+            final List<Object> listCopy = new ArrayList<Object>();
+            for (Object aObject : list) {
+                listCopy.add(copy(aObject));
+            }
+            return listCopy;
+        } else
+            if (object instanceof DataNode) {
+                DataNode nodeCopy = new DataNode();
+                for (Entry<String, Object> entry : getAll()) {
+                    Object newValue = entry.getValue();
+                    nodeCopy.data.put(entry.getKey(), newValue);
+                }
+                return nodeCopy;
+            }
+        return object;
+        
+    }
+    
     Set<Entry<String, Object>> getAll() {
         return data.entrySet();
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + (this.data != null ? this.data.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final DataNode other = (DataNode) obj;
+        if (this.data != other.data && (this.data == null || !this.data.equals(other.data))) {
+            return false;
+        }
+        return true;
     }
     
     @Override
