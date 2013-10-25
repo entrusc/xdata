@@ -55,6 +55,8 @@ import java.util.zip.GZIPOutputStream;
  */
 public class XData {
 
+    private static final DummyProgressListener DUMMY_PROGRESS_LISTENER = new DummyProgressListener();
+    
     private static final byte[] XDATA_HEADER = new byte[] {'x', 'd', 'a', 't', 'a'};
     private static final DataKey<Integer> META_CLASS_ID = DataKey.create("_meta_classid", Integer.class);
     private static final Map<Class<?>, Serializer<?>> PRIMITIVE_SERIALIZERS_BY_CLASS = new HashMap<Class<?>, Serializer<?>>();
@@ -155,7 +157,6 @@ public class XData {
     
     private XData() {
     }
-    
     /**
      * loads a xdata file from disk using the given marshallers. For all classes other
      * than these a special marshaller is required to map the class' data to a data node
@@ -184,6 +185,38 @@ public class XData {
      * @throws IOException 
      */
     public static DataNode load(File file, DataMarshaller<?>... marshallers) throws IOException {
+        return load(file, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+    
+    /**
+     * loads a xdata file from disk using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * object:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     * 
+     * @param file
+     * @param progressListener
+     * @param marshallers
+     * @return
+     * @throws IOException 
+     */
+    public static DataNode load(File file, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
         final Map<String, DataMarshaller<?>> marshallerMap = generateMarshallerMap(false, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(false, DEFAULT_MARSHALLERS));
         
@@ -198,7 +231,7 @@ public class XData {
                 }
             }
             
-            final Object raw = deSerialize(dIn);
+            final Object raw = deSerialize(dIn, progressListener);
             if (!(raw instanceof DataNode)) {
                 throw new IOException("first object in xdata file MUST be a DataNode but was " 
                         + raw == null ? "null" : raw.getClass().getCanonicalName());
@@ -219,7 +252,7 @@ public class XData {
         }
     }
     
-    private static Object deSerialize(DataInputStream dIn) throws IOException {
+    private static Object deSerialize(DataInputStream dIn, ProgressListener progressListener) throws IOException {
         final int type = dIn.readByte();
         switch(type) {
             case VAL_NULL:
@@ -239,7 +272,7 @@ public class XData {
                 final List<Object> list = new ArrayList<Object>();
                 
                 for (int i = 0; i < listSize; ++i) {
-                    final Object object = deSerialize(dIn);
+                    final Object object = deSerialize(dIn, DUMMY_PROGRESS_LISTENER);
                     list.add(object);
                 }
                 return list;
@@ -247,10 +280,14 @@ public class XData {
                 final DataNode dataNode = new DataNode();
                 
                 int length = dIn.readInt();
+                progressListener.onTotalSteps(length);
+                
                 for (int i = 0; i < length; ++i) {
                     final String key = dIn.readUTF();
-                    final Object object = deSerialize(dIn);
+                    final Object object = deSerialize(dIn, DUMMY_PROGRESS_LISTENER);
                     dataNode.replaceObject(key, object);
+                    
+                    progressListener.onStep();
                 }
 
                 return dataNode;
@@ -341,6 +378,41 @@ public class XData {
      * @throws IOException 
      */
     public static void store(DataNode node, File file, DataMarshaller<?>... marshallers) throws IOException {
+        store(node, file, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+    
+    /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * object:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     * <p/>
+     * Note that the node should not be reused after storing the data as the data has already been
+     * marshalled in place!
+     *
+     * @param node
+     * @param file
+     * @param progressListener
+     * @param marshallers
+     * @throws IOException 
+     */
+    public static void store(DataNode node, File file, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
         
         final Map<String, DataMarshaller<?>> marshallerMap = generateMarshallerMap(true, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(true, DEFAULT_MARSHALLERS));
@@ -353,7 +425,7 @@ public class XData {
             dOut.write(XDATA_HEADER);
 
             //serialize the node
-            serialize(classRegistry, marshallerMap, dOut, node);
+            serialize(classRegistry, marshallerMap, dOut, node, progressListener);
             
             //serialize the class registry
             classRegistry.serialize(dOut);
@@ -402,9 +474,11 @@ public class XData {
      * @param dataNode 
      */
     private static void serialize(ClassRegistry classRegistry, Map<String, DataMarshaller<?>> marshallerMap, 
-            DataOutputStream dOut, DataNode dataNode) throws IOException {
+            DataOutputStream dOut, DataNode dataNode, ProgressListener progressListener) throws IOException {
         dOut.writeByte(VAL_NODE);
         dOut.writeInt(dataNode.getSize());
+        
+        progressListener.onTotalSteps(dataNode.getSize());
         
         for (Entry<String, Object> entry : dataNode.getAll()) {
             final String key = entry.getKey();
@@ -414,6 +488,8 @@ public class XData {
             
             dOut.writeUTF(key);
             serializeElement(classRegistry, marshallerMap, dOut, resolvedObject);
+            
+            progressListener.onStep();
         }
     }
     
@@ -443,7 +519,7 @@ public class XData {
             } else
                 if (resolvedObject instanceof DataNode) {
                     final DataNode aDataNode = (DataNode) resolvedObject;
-                    serialize(classRegistry, marshallerMap, dOut, aDataNode);
+                    serialize(classRegistry, marshallerMap, dOut, aDataNode, DUMMY_PROGRESS_LISTENER);
                 } else {
                     dOut.writeByte(VAL_ELEMENT);
                     final Class<?> resolvedObjectClass = resolvedObject.getClass();
@@ -697,4 +773,16 @@ public class XData {
         }
         
     }     
+    
+    private static class DummyProgressListener implements ProgressListener {
+
+        @Override
+        public void onTotalSteps(int totalSteps) {
+        }
+
+        @Override
+        public void onStep() {
+        }
+        
+    }
 }
