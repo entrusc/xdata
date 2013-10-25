@@ -38,7 +38,8 @@ public class DataNode {
     /**
      * returns the associated key (if it exists). If the key has no associated
      * value but the key has defined a default value then the value is returned
-     * instead.
+     * instead. If the key was defined to be not nullable but is null due to its
+     * value or because it does not exist, then an IllegalStateException is thrown
      * 
      * @param <T>
      * @param key
@@ -158,10 +159,19 @@ public class DataNode {
         data.remove(key.getName());
     }
     
+    /**
+     * returns a set of raw keys names.
+     * 
+     * @return 
+     */
+    public Set<String> getRawKeys() {
+        return data.keySet();
+    }
+    
     Set<Entry<String, Object>> getAll() {
         return data.entrySet();
     }
-
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
