@@ -368,9 +368,6 @@ public class XData {
      * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     * <p/>
-     * Note that the node should not be reused after storing the data as the data has already been
-     * marshalled in place!
      *
      * @param node
      * @param file
@@ -402,9 +399,6 @@ public class XData {
      * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     * <p/>
-     * Note that the node should not be reused after storing the data as the data has already been
-     * marshalled in place!
      *
      * @param node
      * @param file
@@ -449,11 +443,14 @@ public class XData {
 
             if (object instanceof List) {
                 final List<Object> list = (List<Object>) object;
+                final List<Object> newList = new ArrayList<Object>(list.size());
                 
                 for (int i = 0; i < list.size(); ++i) {
                     final Object aObject = list.get(i);
-                    list.set(i, marshalObject(marshallerMap, classRegistry, aObject));
+                    newList.add(marshalObject(marshallerMap, classRegistry, aObject));
                 }
+                
+                return newList;
             } else {
                 final DataMarshaller<Object> serializer = (DataMarshaller<Object>)marshallerMap.get(clazz.getCanonicalName());
                 if (serializer == null) {

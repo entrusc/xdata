@@ -263,4 +263,26 @@ public class XDataTest {
         assertNotNull(list);
         assertTrue(list.isEmpty());
     }    
+    
+    @Test
+    public void objectPersistenceTest() throws IOException {
+        File tmpFile = File.createTempFile("xdata_test_persistence1", ".xdata");
+        tmpFile.deleteOnExit();
+                
+        Car car = new Car(4, 180.5f, new Date());
+        DataNode node = new DataNode();
+        DataNode subNode = new DataNode();
+        node.setObject(KEY_CAR_INFO, subNode);
+        node.setObject(KEY_STRING, "some car info");
+        
+        subNode.setObject(KEY_CAR, car);
+        
+        DataNode nodeCopy = node.copy();
+        
+        XData.store(node, tmpFile, new CarMarshaller());
+     
+        assertEquals(nodeCopy, node);
+        System.out.println(nodeCopy);
+        System.out.println(node);
+    }    
 }
