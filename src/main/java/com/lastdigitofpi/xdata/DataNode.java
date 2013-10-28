@@ -19,7 +19,7 @@
 package com.lastdigitofpi.xdata;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class DataNode {
 
-    private final Map<String, Object> data = new HashMap<String, Object>();
+    private final Map<String, Object> data = new LinkedHashMap<String, Object>();
     
     /**
      * returns the associated key (if it exists). If the key has no associated
@@ -52,8 +52,8 @@ public class DataNode {
         final Object object = data.get(key.getName());
         if (containsKey(key)) {
             if (object != null) {
-                if (!key.getDataClass().equals(object.getClass())) {
-                    throw new IllegalStateException("the type of the key (" + key.getClass().getCanonicalName() + ") does not match the type of the value (" 
+                if (!key.getDataClass().isAssignableFrom(object.getClass())) {
+                    throw new IllegalStateException("the type of the key (" + key.getDataClass().getCanonicalName() + ") is not a supertype of the value's class (" 
                             + object.getClass().getCanonicalName() + ")");
                 }
             }
@@ -160,12 +160,27 @@ public class DataNode {
     }
     
     /**
-     * returns a set of raw keys names.
+     * returns a list of raw keys names.
      * 
      * @return 
      */
-    public Set<String> getRawKeys() {
-        return data.keySet();
+    public List<String> getRawKeys() {
+        return new ArrayList<String>(data.keySet());
+    }
+    
+    public List<Object> getRawValues() {
+        return new ArrayList<Object>(data.values());
+    }
+    
+    /**
+     * this returns the raw object for the key. It is always better to use
+     * a proper DataKey or ListDataKey if possible to access data.
+     * 
+     * @param key
+     * @return 
+     */
+    public Object getRawObject(String key) {
+        return data.get(key);
     }
     
     /**

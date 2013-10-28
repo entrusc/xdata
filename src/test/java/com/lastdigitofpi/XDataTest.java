@@ -282,7 +282,5 @@ public class XDataTest {
         XData.store(node, tmpFile, new CarMarshaller());
      
         assertEquals(nodeCopy, node);
-        System.out.println(nodeCopy);
-        System.out.println(node);
     }    
 }
