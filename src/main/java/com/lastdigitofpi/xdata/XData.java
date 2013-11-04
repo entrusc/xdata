@@ -26,10 +26,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -56,24 +57,24 @@ import java.util.zip.GZIPOutputStream;
 public class XData {
 
     private static final DummyProgressListener DUMMY_PROGRESS_LISTENER = new DummyProgressListener();
-    
+
     private static final byte[] XDATA_HEADER = new byte[] {'x', 'd', 'a', 't', 'a'};
     private static final DataKey<String> META_CLASS_NAME = DataKey.create("_meta_classname", String.class);
     private static final Map<Class<?>, Serializer<?>> PRIMITIVE_SERIALIZERS_BY_CLASS = new HashMap<Class<?>, Serializer<?>>();
     private static final Map<Byte, Serializer<?>> PRIMITIVE_SERIALIZERS_BY_ID = new HashMap<Byte, Serializer<?>>();
-    
+
     private static final List<DataMarshaller<?>> DEFAULT_MARSHALLERS = new ArrayList<DataMarshaller<?>>();
-    
+
     private static final int VAL_NULL = 0;
     private static final int VAL_ELEMENT = 1;
     private static final int VAL_LIST = 2;
     private static final int VAL_NODE = 3;
-    
+
     static {
         //default marshallers
         DEFAULT_MARSHALLERS.add(new DateMarshaller());
         DEFAULT_MARSHALLERS.add(new URLMarshaller());
-        
+
         //primitive serializers
         final IntSerializer intSerializer = new IntSerializer();
         PRIMITIVE_SERIALIZERS_BY_CLASS.put(Integer.class, intSerializer);
@@ -101,26 +102,26 @@ public class XData {
         PRIMITIVE_SERIALIZERS_BY_CLASS.put(boolean.class, booleanSerializer);
         final StringSerializer stringSerializer = new StringSerializer();
         PRIMITIVE_SERIALIZERS_BY_CLASS.put(String.class, stringSerializer);
-        
+
         for (Serializer<?> serializer : PRIMITIVE_SERIALIZERS_BY_CLASS.values()) {
             PRIMITIVE_SERIALIZERS_BY_ID.put(serializer.getSerializerId(), serializer);
         }
     }
-    
+
     private static interface Serializer<T> {
-        
+
         byte getSerializerId();
-        
+
         Class<T> getClazz();
-        
+
         void serialize(T object, DataOutputStream dOut) throws IOException;
-        
+
         T deserialize(DataInputStream dIn) throws IOException;
     }
-    
+
     private XData() {
     }
-    
+
     /**
      * loads a xdata file from disk using the given marshallers. For all classes other
      * than these a special marshaller is required to map the class' data to a data node
@@ -142,16 +143,16 @@ public class XData {
      * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     * 
+     *
      * @param file
      * @param marshallers
      * @return
-     * @throws IOException 
+     * @throws IOException
      */
     public static DataNode load(File file, DataMarshaller<?>... marshallers) throws IOException {
         return load(file, DUMMY_PROGRESS_LISTENER, marshallers);
     }
-    
+
     /**
      * loads a xdata file from disk using the given marshallers. For all classes other
      * than these a special marshaller is required to map the class' data to a data node
@@ -173,18 +174,18 @@ public class XData {
      * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     * 
+     *
      * @param file
      * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
      *                                 when a marshaller is missing.
      * @param marshallers
      * @return
-     * @throws IOException 
-     */    
+     * @throws IOException
+     */
     public static DataNode load(File file, boolean ignoreMissingMarshallers, DataMarshaller<?>... marshallers) throws IOException {
         return load(file, DUMMY_PROGRESS_LISTENER, ignoreMissingMarshallers, marshallers);
     }
-    
+
     /**
      * loads a xdata file from disk using the given marshallers. For all classes other
      * than these a special marshaller is required to map the class' data to a data node
@@ -206,17 +207,17 @@ public class XData {
      * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     * 
+     *
      * @param file
      * @param progressListener
      * @param marshallers
      * @return
-     * @throws IOException 
+     * @throws IOException
      */
     public static DataNode load(File file, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
         return load(file, progressListener, false, marshallers);
     }
-    
+
     /**
      * loads a xdata file from disk using the given marshallers. For all classes other
      * than these a special marshaller is required to map the class' data to a data node
@@ -238,48 +239,178 @@ public class XData {
      * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     * 
+     *
      * @param file
      * @param progressListener
      * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
      *                                 when a marshaller is missing.
      * @param marshallers
      * @return
-     * @throws IOException 
+     * @throws IOException
      */
     public static DataNode load(File file, ProgressListener progressListener, boolean ignoreMissingMarshallers, DataMarshaller<?>... marshallers) throws IOException {
+        return load(new FileInputStream(file), progressListener, ignoreMissingMarshallers, marshallers);
+    }
+
+    /**
+     * loads a xdata file from from an inputstream using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * object:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param in
+     * @param marshallers
+     * @return
+     * @throws IOException
+     */
+    public static DataNode load(InputStream in, DataMarshaller<?>... marshallers) throws IOException {
+        return load(in, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+
+    /**
+     * loads a xdata file from from an inputstream using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * object:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param in
+     * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
+     *                                 when a marshaller is missing.
+     * @param marshallers
+     * @return
+     * @throws IOException
+     */
+    public static DataNode load(InputStream in, boolean ignoreMissingMarshallers, DataMarshaller<?>... marshallers) throws IOException {
+        return load(in, DUMMY_PROGRESS_LISTENER, ignoreMissingMarshallers, marshallers);
+    }
+
+    /**
+     * loads a xdata file from from an inputstream using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * object:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param in
+     * @param progressListener
+     * @param marshallers
+     * @return
+     * @throws IOException
+     */
+    public static DataNode load(InputStream in, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
+        return load(in, progressListener, false, marshallers);
+    }
+
+    /**
+     * loads a xdata file from an inputstream using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * object:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param in
+     * @param progressListener
+     * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
+     *                                 when a marshaller is missing.
+     * @param marshallers
+     * @return
+     * @throws IOException
+     */
+    public static DataNode load(InputStream in, ProgressListener progressListener, boolean ignoreMissingMarshallers, DataMarshaller<?>... marshallers) throws IOException {
         final Map<String, DataMarshaller<?>> marshallerMap = generateMarshallerMap(false, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(false, DEFAULT_MARSHALLERS));
-        
-        DataInputStream dIn = new DataInputStream(new GZIPInputStream(new FileInputStream(file)));
+
+        DataInputStream dIn = new DataInputStream(new GZIPInputStream(in));
         try {
             //check the header
             for (int i = 0; i < XDATA_HEADER.length; ++i) {
                 if (dIn.readByte() != XDATA_HEADER[i]) {
-                    throw new IOException(file + " is not a xdata file");
+                    throw new IOException("not a xdata file");
                 }
             }
-            
+
             final Object raw = deSerialize(dIn, progressListener);
             if (!(raw instanceof DataNode)) {
-                throw new IOException("first object in xdata file MUST be a DataNode but was " 
+                throw new IOException("first object in xdata file MUST be a DataNode but was "
                         + raw == null ? "null" : raw.getClass().getCanonicalName());
             }
             final DataNode dataNode = (DataNode) raw;
-            
+
             final Object rawUnMarshalled = unMarshal(marshallerMap, ignoreMissingMarshallers, dataNode);
             if (!(rawUnMarshalled instanceof DataNode)) {
-                throw new IOException("first object in xdata file MUST be a DataNode but was " 
+                throw new IOException("first object in xdata file MUST be a DataNode but was "
                         + rawUnMarshalled == null ? "null" : rawUnMarshalled.getClass().getCanonicalName());
             }
-            
+
             return (DataNode) rawUnMarshalled;
-            
+
         } finally {
             dIn.close();
         }
     }
-    
+
     private static Object deSerialize(DataInputStream dIn, ProgressListener progressListener) throws IOException {
         final int type = dIn.readByte();
         switch(type) {
@@ -298,7 +429,7 @@ public class XData {
                 //because of type erasure we just create a list
                 //of objects here ...
                 final List<Object> list = new ArrayList<Object>();
-                
+
                 for (int i = 0; i < listSize; ++i) {
                     final Object object = deSerialize(dIn, DUMMY_PROGRESS_LISTENER);
                     list.add(object);
@@ -306,15 +437,15 @@ public class XData {
                 return list;
             case VAL_NODE:
                 final DataNode dataNode = new DataNode();
-                
+
                 int length = dIn.readInt();
                 progressListener.onTotalSteps(length);
-                
+
                 for (int i = 0; i < length; ++i) {
                     final String key = dIn.readUTF();
                     final Object object = deSerialize(dIn, DUMMY_PROGRESS_LISTENER);
                     dataNode.replaceObject(key, object);
-                    
+
                     progressListener.onStep();
                 }
 
@@ -323,13 +454,13 @@ public class XData {
             default:
                 throw new IOException("expected node (" + Integer.toHexString(type) + ") but found " + Integer.toHexString(type));
         }
-        
+
     }
-    
-    private static Object unMarshal(Map<String, DataMarshaller<?>> marshallerMap, 
+
+    private static Object unMarshal(Map<String, DataMarshaller<?>> marshallerMap,
             boolean ignoreMissingMarshallers, DataNode node) throws IOException {
         final Map<String, Object> replacements = new HashMap<String, Object>();
-        
+
         for (Entry<String, Object> entry : node.getAll()) {
             final String key = entry.getKey();
             final Object object = entry.getValue();
@@ -343,11 +474,11 @@ public class XData {
                     }
             }
         }
-        
+
         for (Entry<String, Object> entry : replacements.entrySet()) {
             node.replaceObject(entry.getKey(), entry.getValue());
         }
-        
+
         if (node.containsKey(META_CLASS_NAME)) {
             final String className = node.getObject(META_CLASS_NAME);
             final DataMarshaller<Object> marshaller = (DataMarshaller<Object>) marshallerMap.get(className);
@@ -363,8 +494,8 @@ public class XData {
             return node;
         }
     }
-    
-    private static void unMarshalList(final List<Object> list, Map<String, DataMarshaller<?>> marshallerMap, 
+
+    private static void unMarshalList(final List<Object> list, Map<String, DataMarshaller<?>> marshallerMap,
             boolean ignoreMissingMarshallers) throws IOException {
         for (int i = 0; i < list.size(); ++i) {
             final Object aObject = list.get(i);
@@ -379,7 +510,7 @@ public class XData {
             }
         }
     }
-    
+
     /**
      * stores a datanode in a xdata file using the given marshallers. For all classes other
      * than these a special marshaller is required to map the class' data to a data node
@@ -405,12 +536,12 @@ public class XData {
      * @param node
      * @param file
      * @param marshallers
-     * @throws IOException 
+     * @throws IOException
      */
     public static void store(DataNode node, File file, DataMarshaller<?>... marshallers) throws IOException {
         store(node, file, DUMMY_PROGRESS_LISTENER, marshallers);
     }
-    
+
     /**
      * stores a datanode in a xdata file using the given marshallers. For all classes other
      * than these a special marshaller is required to map the class' data to a data node
@@ -437,15 +568,78 @@ public class XData {
      * @param file
      * @param progressListener
      * @param marshallers
-     * @throws IOException 
+     * @throws IOException
      */
     public static void store(DataNode node, File file, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
-        
+        store(node, new FileOutputStream(file), progressListener, marshallers);
+    }
+
+
+    /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * object:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param node
+     * @param out
+     * @param marshallers
+     * @throws IOException
+     */
+    public static void store(DataNode node, OutputStream out, DataMarshaller<?>... marshallers) throws IOException {
+        store(node, out, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+
+    /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * object:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param node
+     * @param out
+     * @param progressListener
+     * @param marshallers
+     * @throws IOException
+     */
+    public static void store(DataNode node, OutputStream out, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
         final Map<String, DataMarshaller<?>> marshallerMap = generateMarshallerMap(true, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(true, DEFAULT_MARSHALLERS));
-        
-        
-        DataOutputStream dOut = new DataOutputStream(new GZIPOutputStream(new FileOutputStream(file)));
+
+
+        DataOutputStream dOut = new DataOutputStream(new GZIPOutputStream(out));
         try {
             //write header
             dOut.write(XDATA_HEADER);
@@ -456,14 +650,14 @@ public class XData {
             dOut.close();
         }
     }
-    
+
     /**
      * wraps an object using the data marshaller for that given object or returns
      * a the object when it is already a DataNode, a primitive, array or string.
-     * 
+     *
      * @param marshallerMap
      * @param object
-     * @return 
+     * @return
      */
     private static Object marshalObject(Map<String, DataMarshaller<?>> marshallerMap, Object object) {
         if (!isMarshalled(object)) {
@@ -473,12 +667,12 @@ public class XData {
             if (object instanceof List) {
                 final List<Object> list = (List<Object>) object;
                 final List<Object> newList = new ArrayList<Object>(list.size());
-                
+
                 for (int i = 0; i < list.size(); ++i) {
                     final Object aObject = list.get(i);
                     newList.add(marshalObject(marshallerMap, aObject));
                 }
-                
+
                 return newList;
             } else {
                 final DataMarshaller<Object> serializer = (DataMarshaller<Object>) marshallerMap.get(clazz.getCanonicalName());
@@ -492,42 +686,42 @@ public class XData {
         }
         return object;
     }
-    
+
     /**
      * serializes a data node that just contains primitives or references to other data
      * nodes.
-     * 
-     * @param dataNode 
+     *
+     * @param dataNode
      */
-    private static void serialize(Map<String, DataMarshaller<?>> marshallerMap, 
+    private static void serialize(Map<String, DataMarshaller<?>> marshallerMap,
             DataOutputStream dOut, DataNode dataNode, ProgressListener progressListener) throws IOException {
         dOut.writeByte(VAL_NODE);
         dOut.writeInt(dataNode.getSize());
-        
+
         progressListener.onTotalSteps(dataNode.getSize());
-        
+
         for (Entry<String, Object> entry : dataNode.getAll()) {
             final String key = entry.getKey();
             final Object object = entry.getValue();
-            
+
             final Object resolvedObject = marshalObject(marshallerMap, object);
-            
+
             dOut.writeUTF(key);
             serializeElement(marshallerMap, dOut, resolvedObject);
-            
+
             progressListener.onStep();
         }
     }
-    
+
     /**
      * serializes a single object
-     * 
+     *
      * @param serializerMap
      * @param dOut
      * @param resolvedObject
-     * @throws IOException 
+     * @throws IOException
      */
-    private static void serializeElement(Map<String, DataMarshaller<?>> marshallerMap, 
+    private static void serializeElement(Map<String, DataMarshaller<?>> marshallerMap,
             DataOutputStream dOut, Object resolvedObject) throws IOException {
         if (resolvedObject == null) {
             dOut.writeByte(VAL_NULL);
@@ -535,13 +729,13 @@ public class XData {
             if (resolvedObject instanceof List) {
                 final List<Object> list = (List<Object>) resolvedObject;
                 final int size = list.size();
-                
+
                 dOut.writeByte(VAL_LIST);
                 dOut.writeInt(size);
-                
+
                 for (int i = 0; i < size; ++i) {
                     serializeElement(marshallerMap, dOut, list.get(i));
-                }                
+                }
             } else
                 if (resolvedObject instanceof DataNode) {
                     final DataNode aDataNode = (DataNode) resolvedObject;
@@ -557,20 +751,20 @@ public class XData {
                     serializer.serialize(resolvedObject, dOut);
                 }
     }
-    
+
     /**
      * checkes if the given object is already marshalled, that is
      * if it is a DataNode, primitive object or array.
-     * 
+     *
      * @param object
-     * @return 
+     * @return
      */
     private static boolean isMarshalled(Object object) {
-        return (object == null 
+        return (object == null
             || PRIMITIVE_SERIALIZERS_BY_CLASS.containsKey(object.getClass())
             || object instanceof DataNode);
     }
-    
+
     private static Map<String, DataMarshaller<?>> generateMarshallerMap(boolean fullyQualifiedClassName, List<DataMarshaller<?>> marshallers) {
         final Map<String, DataMarshaller<?>> map = new HashMap<String, DataMarshaller<?>>();
         for (DataMarshaller<?> marshaller : marshallers) {
@@ -580,7 +774,7 @@ public class XData {
         }
         return map;
     }
-    
+
     // --- Serializers ---
     private static class BooleanSerializer implements Serializer<Boolean> {
 
@@ -588,12 +782,12 @@ public class XData {
         public byte getSerializerId() {
             return 0x00;
         }
-        
+
         @Override
         public Class<Boolean> getClazz() {
             return Boolean.class;
         }
-        
+
         @Override
         public void serialize(Boolean object, DataOutputStream dOut) throws IOException {
             dOut.writeBoolean(object);
@@ -603,21 +797,21 @@ public class XData {
         public Boolean deserialize(DataInputStream dIn) throws IOException {
             return dIn.readBoolean();
         }
-        
-    }     
-    
+
+    }
+
     private static class ByteSerializer implements Serializer<Byte> {
 
         @Override
         public byte getSerializerId() {
             return 0x01;
         }
-        
+
         @Override
         public Class<Byte> getClazz() {
             return Byte.class;
         }
-        
+
         @Override
         public void serialize(Byte object, DataOutputStream dOut) throws IOException {
             dOut.writeByte(object);
@@ -627,21 +821,21 @@ public class XData {
         public Byte deserialize(DataInputStream dIn) throws IOException {
             return dIn.readByte();
         }
-        
-    }   
-    
+
+    }
+
     private static class CharSerializer implements Serializer<Character> {
 
         @Override
         public byte getSerializerId() {
             return 0x02;
         }
-        
+
         @Override
         public Class<Character> getClazz() {
             return Character.class;
         }
-        
+
         @Override
         public void serialize(Character object, DataOutputStream dOut) throws IOException {
             dOut.writeChar(object);
@@ -651,21 +845,21 @@ public class XData {
         public Character deserialize(DataInputStream dIn) throws IOException {
             return dIn.readChar();
         }
-        
-    }       
-    
+
+    }
+
     private static class ShortSerializer implements Serializer<Short> {
 
         @Override
         public byte getSerializerId() {
             return 0x03;
         }
-          
+
         @Override
         public Class<Short> getClazz() {
             return Short.class;
         }
-      
+
         @Override
         public void serialize(Short object, DataOutputStream dOut) throws IOException {
             dOut.writeShort(object);
@@ -675,16 +869,16 @@ public class XData {
         public Short deserialize(DataInputStream dIn) throws IOException {
             return dIn.readShort();
         }
-        
-    }     
-    
+
+    }
+
     private static class IntSerializer implements Serializer<Integer> {
-        
+
         @Override
         public byte getSerializerId() {
             return 0x04;
         }
-        
+
         @Override
         public Class<Integer> getClazz() {
             return Integer.class;
@@ -699,17 +893,17 @@ public class XData {
         public Integer deserialize(DataInputStream dIn) throws IOException {
             return dIn.readInt();
         }
-        
+
     }
-   
-    
+
+
     private static class LongSerializer implements Serializer<Long> {
-        
+
         @Override
         public byte getSerializerId() {
             return 0x05;
         }
-        
+
         @Override
         public Class<Long> getClazz() {
             return Long.class;
@@ -724,16 +918,16 @@ public class XData {
         public Long deserialize(DataInputStream dIn) throws IOException {
             return dIn.readLong();
         }
-        
-    }    
-    
+
+    }
+
     private static class FloatSerializer implements Serializer<Float> {
-        
+
         @Override
         public byte getSerializerId() {
             return 0x06;
         }
-        
+
         @Override
         public Class<Float> getClazz() {
             return Float.class;
@@ -748,17 +942,17 @@ public class XData {
         public Float deserialize(DataInputStream dIn) throws IOException {
             return dIn.readFloat();
         }
-        
-    }   
-    
-    
+
+    }
+
+
     private static class DoubleSerializer implements Serializer<Double> {
-        
+
         @Override
         public byte getSerializerId() {
             return 0x07;
         }
-        
+
         @Override
         public Class<Double> getClazz() {
             return Double.class;
@@ -773,16 +967,16 @@ public class XData {
         public Double deserialize(DataInputStream dIn) throws IOException {
             return dIn.readDouble();
         }
-        
-    }  
-    
+
+    }
+
     private static class StringSerializer implements Serializer<String> {
-        
+
         @Override
         public byte getSerializerId() {
             return 0x08;
         }
-        
+
         @Override
         public Class<String> getClazz() {
             return String.class;
@@ -797,9 +991,9 @@ public class XData {
         public String deserialize(DataInputStream dIn) throws IOException {
             return dIn.readUTF();
         }
-        
-    }     
-    
+
+    }
+
     private static class DummyProgressListener implements ProgressListener {
 
         @Override
@@ -809,6 +1003,6 @@ public class XData {
         @Override
         public void onStep() {
         }
-        
+
     }
 }
