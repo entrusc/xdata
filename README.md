@@ -147,7 +147,7 @@ then type:
 now you can use xdata with maven like this in your projects:
 
     <dependency>
-        <groupId>com.lastdigitofpi</groupId>
+        <groupId>com.moebiusgames</groupId>
         <artifactId>xdata</artifactId>
         <version>1.1-SNAPSHOT</version>
     </dependency>
@@ -175,7 +175,7 @@ A more sophisticated example would be to implement the DataMarshaller and
 just put your objects directly into a data node. Check out the included
 marshallers in this package to learn how to write your own marshallers:
 
-    https://github.com/entrusc/xdata/tree/master/src/main/com/lastdigitofpi/xdata/marshaller
+    https://github.com/entrusc/xdata/tree/master/src/main/com/moebiusgames/xdata/marshaller
 
 
 
