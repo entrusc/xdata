@@ -17,7 +17,7 @@
  * MA 02110-1301  USA
  */
 
-package com.lastdigitofpi.xdata;
+package com.moebiusgames.xdata;
 
 /**
  * Allows to monitor the progress of a method

@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package com.lastdigitofpi.xdata;
+package com.moebiusgames.xdata;
 
 /**
  * A data key to use with DataNode. You should declare your data keys

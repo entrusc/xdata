@@ -16,10 +16,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package com.lastdigitofpi.xdata;
+package com.moebiusgames.xdata;
 
-import com.lastdigitofpi.xdata.marshaller.DateMarshaller;
-import com.lastdigitofpi.xdata.marshaller.URLMarshaller;
+import com.moebiusgames.xdata.marshaller.DateMarshaller;
+import com.moebiusgames.xdata.marshaller.URLMarshaller;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;

@@ -17,11 +17,11 @@
  * MA 02110-1301  USA
  */
 
-package com.lastdigitofpi.xdata.marshaller;
+package com.moebiusgames.xdata.marshaller;
 
-import com.lastdigitofpi.xdata.DataKey;
-import com.lastdigitofpi.xdata.DataMarshaller;
-import com.lastdigitofpi.xdata.DataNode;
+import com.moebiusgames.xdata.DataKey;
+import com.moebiusgames.xdata.DataMarshaller;
+import com.moebiusgames.xdata.DataNode;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
