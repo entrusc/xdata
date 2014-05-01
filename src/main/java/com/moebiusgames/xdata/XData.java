@@ -140,7 +140,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -171,7 +171,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -204,7 +204,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -236,7 +236,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -270,7 +270,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -301,7 +301,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -334,7 +334,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -366,7 +366,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -529,7 +529,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -560,7 +560,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -593,7 +593,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
@@ -624,7 +624,7 @@ public class XData {
      * <li>List&lt;?&gt;</li>
      * </ul>
      * <p/>
-     * Also take a look at {@link com.lastdigitofpi.xdata.marshaller}. There are a bunch of
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
      *
