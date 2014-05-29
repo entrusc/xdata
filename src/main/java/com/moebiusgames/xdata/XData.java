@@ -381,6 +381,7 @@ public class XData {
     public static DataNode load(InputStream in, ProgressListener progressListener, boolean ignoreMissingMarshallers, DataMarshaller<?>... marshallers) throws IOException {
         final Map<String, DataMarshaller<?>> marshallerMap = generateMarshallerMap(false, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(false, DEFAULT_MARSHALLERS));
+        final DataNodePool dataNodePool = new DataNodePool();
 
         DataInputStream dIn = new DataInputStream(new GZIPInputStream(in));
         try {
@@ -391,27 +392,26 @@ public class XData {
                 }
             }
 
-            final Object raw = deSerialize(dIn, progressListener);
+            final Object raw = deSerialize(dIn, dataNodePool, progressListener);
             if (!(raw instanceof DataNode)) {
                 throw new IOException("first object in xdata file MUST be a DataNode but was "
                         + raw == null ? "null" : raw.getClass().getCanonicalName());
             }
             final DataNode dataNode = (DataNode) raw;
 
-            final Object rawUnMarshalled = unMarshal(marshallerMap, ignoreMissingMarshallers, dataNode);
+            final Object rawUnMarshalled = unMarshal(marshallerMap, dataNodePool, ignoreMissingMarshallers, dataNode);
             if (!(rawUnMarshalled instanceof DataNode)) {
                 throw new IOException("first object in xdata file MUST be a DataNode but was "
                         + rawUnMarshalled == null ? "null" : rawUnMarshalled.getClass().getCanonicalName());
             }
 
             return (DataNode) rawUnMarshalled;
-
         } finally {
             dIn.close();
         }
     }
 
-    private static Object deSerialize(DataInputStream dIn, ProgressListener progressListener) throws IOException {
+    private static Object deSerialize(DataInputStream dIn, DataNodePool dataNodePool, ProgressListener progressListener) throws IOException {
         final int type = dIn.readByte();
         switch(type) {
             case VAL_NULL:
@@ -431,19 +431,19 @@ public class XData {
                 final List<Object> list = new ArrayList<Object>();
 
                 for (int i = 0; i < listSize; ++i) {
-                    final Object object = deSerialize(dIn, DUMMY_PROGRESS_LISTENER);
+                    final Object object = deSerialize(dIn, dataNodePool, DUMMY_PROGRESS_LISTENER);
                     list.add(object);
                 }
                 return list;
             case VAL_NODE:
-                final DataNode dataNode = new DataNode();
+                final DataNode dataNode = dataNodePool.getNew();
 
                 int length = dIn.readInt();
                 progressListener.onTotalSteps(length);
 
                 for (int i = 0; i < length; ++i) {
                     final String key = dIn.readUTF();
-                    final Object object = deSerialize(dIn, DUMMY_PROGRESS_LISTENER);
+                    final Object object = deSerialize(dIn, dataNodePool, DUMMY_PROGRESS_LISTENER);
                     dataNode.replaceObject(key, object);
 
                     progressListener.onStep();
@@ -458,7 +458,7 @@ public class XData {
     }
 
     private static Object unMarshal(Map<String, DataMarshaller<?>> marshallerMap,
-            boolean ignoreMissingMarshallers, DataNode node) throws IOException {
+            DataNodePool dataNodePool, boolean ignoreMissingMarshallers, DataNode node) throws IOException {
         final Map<String, Object> replacements = new HashMap<String, Object>();
 
         for (Entry<String, Object> entry : node.getAll()) {
@@ -466,16 +466,20 @@ public class XData {
             final Object object = entry.getValue();
             if (object != null) {
                 if (object instanceof DataNode) {
-                    replacements.put(key, unMarshal(marshallerMap, ignoreMissingMarshallers, (DataNode) object));
+                    replacements.put(key, unMarshal(marshallerMap, dataNodePool, ignoreMissingMarshallers, (DataNode) object));
                 } else
                     if (object instanceof List) {
                         final List<Object> list = (List<Object>) object;
-                        unMarshalList(list, marshallerMap, ignoreMissingMarshallers);
+                        unMarshalList(list, marshallerMap, dataNodePool, ignoreMissingMarshallers);
                     }
             }
         }
 
         for (Entry<String, Object> entry : replacements.entrySet()) {
+            final Object rawObject = node.getRawObject(entry.getKey());
+            if (rawObject instanceof DataNode && rawObject != entry.getValue()) {
+                dataNodePool.giveBack((DataNode) node.getRawObject(entry.getKey()));
+            }
             node.replaceObject(entry.getKey(), entry.getValue());
         }
 
@@ -496,16 +500,16 @@ public class XData {
     }
 
     private static void unMarshalList(final List<Object> list, Map<String, DataMarshaller<?>> marshallerMap,
-            boolean ignoreMissingMarshallers) throws IOException {
+            DataNodePool dataNodePool, boolean ignoreMissingMarshallers) throws IOException {
         for (int i = 0; i < list.size(); ++i) {
             final Object aObject = list.get(i);
             if (aObject != null) {
                 if (aObject instanceof DataNode) {
-                    list.set(i, unMarshal(marshallerMap, ignoreMissingMarshallers, (DataNode) aObject));
+                    list.set(i, unMarshal(marshallerMap, dataNodePool, ignoreMissingMarshallers, (DataNode) aObject));
                 } else
                     if (aObject instanceof List) {
                         final List<Object> aList = (List<Object>) aObject;
-                        unMarshalList(aList, marshallerMap, ignoreMissingMarshallers);
+                        unMarshalList(aList, marshallerMap, dataNodePool, ignoreMissingMarshallers);
                     }
             }
         }
@@ -1004,5 +1008,30 @@ public class XData {
         public void onStep() {
         }
 
+    }
+
+    private static class DataNodePool {
+        private final List<DataNode> dataNodes = new ArrayList<DataNode>();
+
+        //DEBUG
+        private volatile int givenBackCounter = 0;
+
+        public synchronized DataNode getNew() {
+            if (dataNodes.isEmpty()) {
+                return new DataNode();
+            } else {
+                return dataNodes.remove(0);
+            }
+        }
+
+        public synchronized void giveBack(DataNode dataNode) {
+            dataNode.clear();
+            this.dataNodes.add(dataNode);
+            givenBackCounter++;
+        }
+
+        public int getGivenBackCounter() {
+            return givenBackCounter;
+        }
     }
 }

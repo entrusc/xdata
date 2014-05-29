@@ -28,22 +28,29 @@ import java.util.Set;
 /**
  * Contains data that can be stored as xdata file. Note that you can also store
  * data nodes as objects within this data node.
- * 
+ *
  * @author Florian Frankenberger
  */
 public class DataNode {
 
     private final Map<String, Object> data = new LinkedHashMap<String, Object>();
-    
+
+    /**
+     * clears the data node
+     */
+    public void clear() {
+        this.data.clear();
+    }
+
     /**
      * returns the associated key (if it exists). If the key has no associated
      * value but the key has defined a default value then the value is returned
      * instead. If the key was defined to be not nullable but is null due to its
      * value or because it does not exist, then an IllegalStateException is thrown
-     * 
+     *
      * @param <T>
      * @param key
-     * @return 
+     * @return
      */
     public <T> T getObject(DataKey<T> key) {
         if (key == null) {
@@ -53,7 +60,7 @@ public class DataNode {
         if (containsKey(key)) {
             if (object != null) {
                 if (!key.getDataClass().isAssignableFrom(object.getClass())) {
-                    throw new IllegalStateException("the type of the key (" + key.getDataClass().getCanonicalName() + ") is not a supertype of the value's class (" 
+                    throw new IllegalStateException("the type of the key (" + key.getDataClass().getCanonicalName() + ") is not a supertype of the value's class ("
                             + object.getClass().getCanonicalName() + ")");
                 }
             }
@@ -67,7 +74,7 @@ public class DataNode {
         }
         return (T) object;
     }
-    
+
     public <T> T getMandatoryObject(DataKey<T> key) {
         if (!containsKey(key)) {
             throw new IllegalStateException("no value for key \"" + key.getName() + "\" found, but was mandatory");
@@ -79,29 +86,29 @@ public class DataNode {
         if (key == null) {
             throw new IllegalArgumentException("key must not be null");
         }
-        
+
         final Object object = data.get(key.getName());
-        
+
         if (object == null && !key.allowNull()) {
             return new ArrayList<T>();
         }
-        
+
         return (List<T>) object;
     }
-    
+
     public <T> List<T> getMandatoryObjectList(ListDataKey<T> key) {
         if (!containsKey(key)) {
             throw new IllegalStateException("no value for list key \"" + key.getName() + "\" found, but was mandatory");
         }
         return getObjectList(key);
-    }    
-    
+    }
+
     /**
      * stores an object for the given key
-     * 
+     *
      * @param <T>
      * @param key
-     * @param object 
+     * @param object
      */
     public <T> void setObject(DataKey<T> key, T object) {
         if (key == null) {
@@ -112,13 +119,13 @@ public class DataNode {
         }
         data.put(key.getName(), object);
     }
-    
+
     /**
      * stores a list of objects for a given key
-     * 
+     *
      * @param <T>
      * @param key a list data key (where isList is set to true)
-     * @param objects 
+     * @param objects
      */
     public <T> void setObjectList(ListDataKey<T> key, List<T> objects) {
         if (key == null) {
@@ -129,13 +136,13 @@ public class DataNode {
         }
         data.put(key.getName(), deepListCopy(objects));
     }
-    
+
     /**
      * checks if a value for that key exists (even if this value is null)
-     * 
+     *
      * @param <T>
      * @param key
-     * @return 
+     * @return
      */
     public <T> boolean containsKey(Key<T> key) {
         if (key == null) {
@@ -143,57 +150,57 @@ public class DataNode {
         }
         return data.containsKey(key.getName());
     }
-    
+
     public int getSize() {
         return data.size();
     }
-    
+
     void replaceObject(String key, Object object) {
         this.data.put(key, object);
     }
-    
+
     public void clearObject(DataKey<?> key) {
         if (key == null) {
             throw new IllegalArgumentException("key must not be null");
         }
         data.remove(key.getName());
     }
-    
+
     /**
      * returns a list of raw keys names.
-     * 
-     * @return 
+     *
+     * @return
      */
     public List<String> getRawKeys() {
         return new ArrayList<String>(data.keySet());
     }
-    
+
     public List<Object> getRawValues() {
         return new ArrayList<Object>(data.values());
     }
-    
+
     /**
      * this returns the raw object for the key. It is always better to use
      * a proper DataKey or ListDataKey if possible to access data.
-     * 
+     *
      * @param key
-     * @return 
+     * @return
      */
     public Object getRawObject(String key) {
         return data.get(key);
     }
-    
+
     /**
      * returns a shallow copy of this object meaning that
      * all lists and data nodes are new instances but the
      * objects in the data nodes/lists are the same.
-     * 
-     * @return 
+     *
+     * @return
      */
     public DataNode copy() {
         return (DataNode) copy(this);
     }
-    
+
     private Object copy(Object object) {
         if (object instanceof List) {
             final List<Object> list = (List<Object>) object;
@@ -212,9 +219,9 @@ public class DataNode {
                 return nodeCopy;
             }
         return object;
-        
+
     }
-    
+
     Set<Entry<String, Object>> getAll() {
         return data.entrySet();
     }
@@ -240,7 +247,7 @@ public class DataNode {
         }
         return true;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -248,12 +255,12 @@ public class DataNode {
         sb.append(this.toString(0));
         return sb.toString();
     }
-    
+
     public String toString(int depth) {
         final String tabs = spaces(depth);
-        
+
         StringBuilder out = new StringBuilder();
-        
+
         for (Entry<String, Object> entry : getAll()) {
             final String key = entry.getKey();
             final Object object = entry.getValue();
@@ -273,7 +280,7 @@ public class DataNode {
         }
         return out.toString();
     }
-    
+
     private static void listToString(StringBuilder out, int depth, List<Object> list) {
             int size = list.size();
             int strLen = String.valueOf(size).length();
@@ -293,9 +300,9 @@ public class DataNode {
                         out.append(String.format("%s|-[%" + strLen + "d] %s\n", spacePlus4, i, element != null ? element.toString() : "[null]"));
                     }
             }
-        
+
     }
-    
+
     private static String spaces(int length) {
         StringBuilder tabsBuilder = new StringBuilder();
         for (int i = 0; i < length; ++i) {
@@ -303,7 +310,7 @@ public class DataNode {
         }
         return tabsBuilder.toString();
     }
-    
+
     private static <T> List<T> deepListCopy(List<T> list) {
         final List<T> newList = new ArrayList<T>();
         for (T element : list) {
