@@ -175,7 +175,7 @@ A more sophisticated example would be to implement the DataMarshaller and
 just put your objects directly into a data node. Check out the included
 marshallers in this package to learn how to write your own marshallers:
 
-    https://github.com/entrusc/xdata/tree/master/src/main/com/moebiusgames/xdata/marshaller
+    https://github.com/entrusc/xdata/tree/master/src/main/java/com/moebiusgames/xdata/marshaller
 
 
 
