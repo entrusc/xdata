@@ -134,26 +134,15 @@ information.
 On top of all these features of the file format, xdata is also gz compressed which
 helps to make it small but also keeps it compatible.
 
-how to build and use?
-=====================
-It is easy - just clone the repository:
-
-    git clone https://github.com/entrusc/xdata
-
-then type:
-
-    mvn install
-
-now you can use xdata with maven like this in your projects:
+how to use it?
+==============
+xdata is available from the central maven repository, just use it like that:
 
     <dependency>
         <groupId>com.moebiusgames</groupId>
         <artifactId>xdata</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.4</version>
     </dependency>
-
-If you don't use maven for your project you can also just include the
-file ./target/xdata-1.1-SNAPSHOT.jar in your project.
 
 example
 =======
