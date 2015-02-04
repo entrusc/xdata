@@ -14,6 +14,8 @@ Xdata format highlights:
 * support for lists of any type
 * compression using standard gzip
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.moebiusgames/xdata/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.moebiusgames/xdata)
+
 license
 =======
 Xdata is licensed under LGPL 2.1 and can therefore be used in any project, even
