@@ -2,7 +2,7 @@ xdata
 =====
 xdata is a java library for storing and loading xdata files. The xdata file format 
 was initially developed as an universal file format for the science fiction voxel 
-game Xcylin (http://xcylin.com) but is suitable for a lot of other applications
+game [Xcylin](http://xcylin.com) but is suitable for a lot of other applications
 as well. 
 
 xdata format highlights:
@@ -26,10 +26,10 @@ changelog
 =========
 
 * 1.5
-  * New way to use generic types in keys. This helps to get rid of a lot of ugly casting. See DataKey.createKey(String name, GenericType<T> genType) for more infos.
-  * GenericType<T> can now also be used when specifying the type in a custom Marshaller. See the new GenericDataMarshaller class.
-  * XData.store and XData.load now are recursion free (complete rewrite), so that we don't run into StackOverflowExceptions with big objects.
-  * Also XData.load now deserializes and unmarshalles objects on the fly and does not need to first construct the whole tree in memory before unmarshalling.
+  * New way to use generic types in keys. This helps to get rid of a lot of ugly casting. See `DataKey.createKey(String name, GenericType<T> genType)` for more infos.
+  * `GenericType<T>` can now also be used when specifying the type in a custom Marshaller. See the new `GenericDataMarshaller` class.
+  * `XData.store()` and `XData.load()` now are recursion free (complete rewrite), so that we don't run into `StackOverflowExceptions` with big objects.
+  * Also `XData.load()` now deserializes and unmarshalles objects on the fly and does not need to first construct the whole tree in memory before unmarshalling.
   * Objects that are used more than once within one persisted tree are now getting stored only once. All other occurances are replaced by references to the first one. Note that this feature does not work for recursive or cyclic dependencies of stored objects.
 
 xdata file format
@@ -146,13 +146,10 @@ helps to make it small but also keeps it compatible.
 
 how to use it?
 ==============
-xdata is available from the central maven repository, just use it like that:
+xdata is available from the central maven repository, just click this link
+to get to the most recent version:
 
-    <dependency>
-        <groupId>com.moebiusgames</groupId>
-        <artifactId>xdata</artifactId>
-        <version>1.4</version>
-    </dependency>
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.moebiusgames/xdata/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.moebiusgames/xdata)
 
 example
 =======
