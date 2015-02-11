@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Florian Frankenberger.
+ * Copyright (C) 2015 Florian Frankenberger.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,24 +16,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
-package com.moebiusgames.xdata;
+
+package com.moebiusgames.xdata.type;
+
+import java.lang.reflect.ParameterizedType;
 
 /**
- * Marshals an object of type <T> into a DataNode and
- * back. This way it is always defined how to map fields
- * to fields of a type - therefore guaranteeing a maximum
- * of data portability.
- *
+ * Capture class, used to capture the generic type
+ * 
  * @author Florian Frankenberger
- * @param <T>
  */
-public interface DataMarshaller<T> extends AbstractDataMarshaller<T> {
+class Capture<T> {
 
-    /**
-     * returns the actual class that this marshaller is capable of marshalling.
-     * @return
-     */
-    Class<T> getDataClass();
+    final ParameterizedType capture() {
+        final ParameterizedType superClass = (ParameterizedType) this.getClass().getGenericSuperclass();
+        return (ParameterizedType) superClass.getActualTypeArguments()[0];
+    }
 
 }
-

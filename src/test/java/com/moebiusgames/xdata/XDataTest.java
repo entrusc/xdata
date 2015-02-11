@@ -18,11 +18,8 @@
  */
 package com.moebiusgames.xdata;
 
-import com.moebiusgames.xdata.ListDataKey;
-import com.moebiusgames.xdata.DataKey;
-import com.moebiusgames.xdata.DataNode;
-import com.moebiusgames.xdata.XData;
 import com.moebiusgames.xdata.marshaller.DateMarshaller;
+import com.moebiusgames.xdata.type.GenericType;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -48,19 +45,22 @@ public class XDataTest {
     private static final DataKey<Double> KEY_DOUBLE = DataKey.create("double", Double.class);
     private static final DataKey<String> KEY_STRING = DataKey.create("string", String.class);
     private static final DataKey<Date> KEY_DATE = DataKey.create("date", Date.class);
-    
+
     private static final ListDataKey<String> KEY_STRING_LIST = ListDataKey.create("string_list", String.class);
-        
+
     private static final DataKey<DataNode> KEY_CAR_INFO = DataKey.create("car_info", DataNode.class);
     private static final DataKey<Car> KEY_CAR = DataKey.create("car", Car.class);
+    private static final DataKey<Car> KEY_CAR_A = DataKey.create("car a", Car.class);
+    private static final DataKey<Car> KEY_CAR_B = DataKey.create("car b", Car.class);
+    private static final DataKey<Car> KEY_CAR_C = DataKey.create("car c", Car.class);
     private static final ListDataKey<Car> KEY_CAR_LIST = ListDataKey.create("car", Car.class);
 
     private static final ListDataKey<Object> KEY_OBJECT_LIST = ListDataKey.create("objects", Object.class);
-    private static final ListDataKey<List> KEY_CAR_META_LIST = ListDataKey.create("carsofcars", List.class);
-    
+    private static final ListDataKey<List<Car>> KEY_CAR_META_LIST = ListDataKey.create("carsofcars", new GenericType<List<Car>>() {});
+
     private static final DataKey<String> KEY_STRING_NOT_NULL = DataKey.create("stringnn", String.class, false);
     private static final DataKey<String> KEY_STRING_DEFAULT = DataKey.create("stringdef", String.class, "fasel");
-    
+
     private static final ListDataKey<String> KEY_STRING_LIST_NOT_NULL = ListDataKey.create("stringlist", String.class, false);
     /**
      * A simple store and retrieve test (no marshalling)
@@ -70,7 +70,7 @@ public class XDataTest {
     public void simpleTest() throws IOException {
         File tmpFile = File.createTempFile("xdata_test1", ".xdata");
         tmpFile.deleteOnExit();
-        
+
         DataNode dataNode = new DataNode();
         dataNode.setObject(KEY_BOOL, true);
         dataNode.setObject(KEY_STRING, "blafasel");
@@ -82,9 +82,9 @@ public class XDataTest {
         dataNode.setObject(KEY_FLOAT, 42.24f);
         dataNode.setObject(KEY_DOUBLE, Math.PI);
         dataNode.setObjectList(KEY_STRING_LIST, Arrays.asList(new String[] { "abc", "def", "ghi" }));
-        
+
         XData.store(dataNode, tmpFile);
-        
+
         DataNode restoredNode = XData.load(tmpFile);
         assertEquals(Boolean.TRUE, restoredNode.getObject(KEY_BOOL));
         assertEquals("blafasel", restoredNode.getObject(KEY_STRING));
@@ -97,39 +97,39 @@ public class XDataTest {
         assertEquals(Math.PI, (double) restoredNode.getObject(KEY_DOUBLE), 0.0001f);
         assertEquals(Arrays.asList(new String[] { "abc", "def", "ghi" }), restoredNode.getObjectList(KEY_STRING_LIST));
     }
-    
+
     @Test
     public void advancedTest() throws IOException {
         Date now = new Date(); //now
-        
+
         File tmpFile = File.createTempFile("xdata_test2", ".xdata");
         tmpFile.deleteOnExit();
-        
+
         DataNode node = new DataNode();
         node.setObject(KEY_DATE, now);
-        
+
         XData.store(node, tmpFile, new DateMarshaller());
-        
+
         DataNode restoredNode = XData.load(tmpFile, new DateMarshaller());
         assertEquals(now, restoredNode.getObject(KEY_DATE));
     }
-    
+
     @Test
     public void customMarshallerTest() throws IOException {
         File tmpFile = File.createTempFile("xdata_test3", ".xdata");
         tmpFile.deleteOnExit();
-                
+
         Car car = new Car(4, 180.5f, new Date());
         DataNode node = new DataNode();
         DataNode subNode = new DataNode();
         node.setObject(KEY_CAR_INFO, subNode);
         node.setObject(KEY_STRING, "some car info");
-        
+
         subNode.setObject(KEY_CAR, car);
-        
-        
+
+
         XData.store(node, tmpFile, new CarMarshaller());
-     
+
         DataNode restoredNode = XData.load(tmpFile, new CarMarshaller());
         assertTrue(restoredNode.containsKey(KEY_CAR_INFO));
         assertTrue(restoredNode.containsKey(KEY_STRING));
@@ -138,149 +138,172 @@ public class XDataTest {
         assertEquals("some car info", restoredNode.getObject(KEY_STRING));
         assertEquals(car, restoredSubNode.getObject(KEY_CAR));
     }
-    
+
     @Test
     public void customMarshallerListTest() throws IOException {
         File tmpFile = File.createTempFile("xdata_test3", ".xdata");
         tmpFile.deleteOnExit();
-        
+
         Random random = new Random();
         List<Car> cars = new ArrayList<Car>();
         for (int i = 0; i < 100; ++i) {
             final Car car = new Car(random.nextInt(5), random.nextFloat() * 400f, new Date());
             cars.add(random.nextBoolean() ? car : null);
         }
-        
+
         DataNode node = new DataNode();
         DataNode subNode = new DataNode();
         node.setObject(KEY_CAR_INFO, subNode);
         node.setObject(KEY_STRING, "some car info");
-        
+
         subNode.setObjectList(KEY_CAR_LIST, cars);
-        
+
         XData.store(node, tmpFile, new CarMarshaller());
-     
+
         DataNode restoredNode = XData.load(tmpFile, new CarMarshaller());
-        
+
         assertTrue(restoredNode.containsKey(KEY_CAR_INFO));
         assertTrue(restoredNode.containsKey(KEY_STRING));
         DataNode restoredSubNode = restoredNode.getObject(KEY_CAR_INFO);
         assertTrue(restoredSubNode.containsKey(KEY_CAR_LIST));
         assertEquals("some car info", restoredNode.getObject(KEY_STRING));
         assertEquals(cars, restoredSubNode.getObjectList(KEY_CAR_LIST));
-        
+
     }
-    
+
     @Test
     public void customMarshallerListTypeTest() throws IOException {
         File tmpFile = File.createTempFile("xdata_test5", ".xdata");
         tmpFile.deleteOnExit();
-                
+
         Car car = new Car(4, 180.5f, new Date());
         Jet jet = new Jet(100f);
         DataNode node = new DataNode();
-        
+
         List<Object> objects = Arrays.asList(new Object[] { car, jet });
-        
+
         node.setObjectList(KEY_OBJECT_LIST, objects);
-        
+
         XData.store(node, tmpFile, new CarMarshaller(), new JetMarshaller());
         DataNode restoredNode = XData.load(tmpFile, new CarMarshaller(), new JetMarshaller());
 
         assertEquals(objects, restoredNode.getObjectList(KEY_OBJECT_LIST));
-    }    
-    
+    }
+
     @Test
     public void customMarshallerListOfListsTest() throws IOException {
         File tmpFile = File.createTempFile("xdata_test6", ".xdata");
         tmpFile.deleteOnExit();
-                
+
         Car car = new Car(4, 180.5f, new Date());
         List<Date> checkDates = new ArrayList<Date>();
         checkDates.add(new Date());
         checkDates.add(new Date(578987L));
         car.setCheckDates(checkDates);
-        
+
         DataNode node = new DataNode();
-        
-        List<List> carMetaList = new ArrayList<List>();
+
+        List<List<Car>> carMetaList = new ArrayList<List<Car>>();
         List<Car> carList = new ArrayList<Car>();
         carList.add(car);
         carMetaList.add(carList);
-        
-        node.setObjectList(KEY_CAR_META_LIST, (List<List>) carMetaList);
-        
+
+        node.setObjectList(KEY_CAR_META_LIST, carMetaList);
+
         XData.store(node, tmpFile, new CarMarshaller());
         DataNode restoredNode = XData.load(tmpFile, new CarMarshaller(), new JetMarshaller());
 
-        assertEquals(restoredNode.getObjectList(KEY_CAR_META_LIST), (List<List>) carMetaList);
-    }        
-    
+        assertEquals(restoredNode.getObjectList(KEY_CAR_META_LIST), carMetaList);
+    }
+
     @Test(expected=IllegalArgumentException.class)
     public void keyTest1() throws IOException {
         DataNode node = new DataNode();
-        
+
         node.setObject(KEY_STRING_NOT_NULL, null);
-    }    
+    }
 
     @Test
     public void keyTest2() throws IOException {
         File tmpFile = File.createTempFile("xdata_test_key1", ".xdata");
         tmpFile.deleteOnExit();
-                
+
         DataNode node = new DataNode();
-        
+
         XData.store(node, tmpFile);
         DataNode restoredNode = XData.load(tmpFile);
 
         assertEquals(KEY_STRING_DEFAULT.getDefaultValue(), restoredNode.getObject(KEY_STRING_DEFAULT));
     }
-    
+
     @Test(expected=IllegalStateException.class)
     public void keyTest3() throws IOException {
         File tmpFile = File.createTempFile("xdata_test_key2", ".xdata");
         tmpFile.deleteOnExit();
-                
+
         DataNode node = new DataNode();
-        
+
         XData.store(node, tmpFile);
         DataNode restoredNode = XData.load(tmpFile, new CarMarshaller(), new JetMarshaller());
 
         restoredNode.getMandatoryObject(KEY_STRING_DEFAULT);
     }
-    
+
     @Test()
     public void keyTest4() throws IOException {
         File tmpFile = File.createTempFile("xdata_test_key3", ".xdata");
         tmpFile.deleteOnExit();
-                
+
         DataNode node = new DataNode();
-        
+
         XData.store(node, tmpFile);
         DataNode restoredNode = XData.load(tmpFile);
 
         final List<String> list = restoredNode.getObjectList(KEY_STRING_LIST_NOT_NULL);
         assertNotNull(list);
         assertTrue(list.isEmpty());
-    }    
-    
+    }
+
     @Test
     public void objectPersistenceTest() throws IOException {
         File tmpFile = File.createTempFile("xdata_test_persistence1", ".xdata");
         tmpFile.deleteOnExit();
-                
+
         Car car = new Car(4, 180.5f, new Date());
         DataNode node = new DataNode();
         DataNode subNode = new DataNode();
         node.setObject(KEY_CAR_INFO, subNode);
         node.setObject(KEY_STRING, "some car info");
-        
+
         subNode.setObject(KEY_CAR, car);
-        
+
         DataNode nodeCopy = node.copy();
-        
+
         XData.store(node, tmpFile, new CarMarshaller());
-     
+
         assertEquals(nodeCopy, node);
-    }    
+    }
+
+    @Test
+    public void testReference() throws IOException {
+        File tmpFile = File.createTempFile("xdata_test_reference", ".xdata");
+        tmpFile.deleteOnExit();
+
+        DataNode node = new DataNode();
+        Car car = new Car(4, 180.5f, new Date());
+        node.setObject(KEY_CAR_A, car);
+        node.setObject(KEY_CAR_B, car);
+        node.setObject(KEY_CAR_C, car);
+
+        XData.store(node, tmpFile, new CarMarshaller());
+        DataNode result = XData.load(tmpFile, new CarMarshaller());
+
+        assertNotNull(result.getObject(KEY_CAR_A));
+        assertNotNull(result.getObject(KEY_CAR_B));
+        assertNotNull(result.getObject(KEY_CAR_C));
+
+        assertEquals(car, result.getObject(KEY_CAR_A));
+        assertEquals(car, result.getObject(KEY_CAR_B));
+        assertEquals(car, result.getObject(KEY_CAR_C));
+    }
 }

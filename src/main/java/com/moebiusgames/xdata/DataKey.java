@@ -18,6 +18,8 @@
  */
 package com.moebiusgames.xdata;
 
+import com.moebiusgames.xdata.type.GenericType;
+
 /**
  * A data key to use with DataNode. You should declare your data keys
  * like this:
@@ -34,7 +36,7 @@ public final class DataKey<T> implements Key<T> {
     private final Class<T> dataClass;
     private final boolean allowNull;
     private final T defaultValue;
-    
+
     private DataKey(String name, Class<T> dataClass, boolean allowNull, T defaultValue) {
         this.name = name;
         this.dataClass = dataClass;
@@ -64,61 +66,61 @@ public final class DataKey<T> implements Key<T> {
     public String toString() {
         return "DataKey{" + "name=" + name + ", dataClass=" + dataClass + ", defaultValue=" + defaultValue + '}';
     }
-    
+
     /**
      * creates a data key with the given name and type. This data
      * key allows for null values and sets no default value.
-     * 
+     *
      * @param <T> the type
      * @param name the name of the key that is stored in the xdata file
      * @param dataClass the type's class
-     * @return 
+     * @return
      */
     public static <T> DataKey<T> create(String name, Class<T> dataClass) {
         return create(name, dataClass, true, null);
     }
-    
+
     /**
      * creates a data key with the given name, type and default value. This
      * data key allows for null values.
-     * 
+     *
      * @param <T> the type
      * @param name the name of the key that is stored in the xdata file
      * @param dataClass the type's class
      * @param defaultValue the default value to use when there is no value set for this key.
      *                     If set to null this will be the same as setting no default value.
-     * @return 
+     * @return
      */
     public static <T> DataKey<T> create(String name, Class<T> dataClass, T defaultValue) {
         return create(name, dataClass, true, defaultValue);
     }
-    
+
     /**
      * creates a data key with the given name, data type and the given permission
      * to allow null values. No default value will be specified.
-     * 
+     *
      * @param <T> the type
      * @param name the name of the key that is stored in the xdata file
      * @param dataClass the type's class
      * @param allowNull allow null values?
-     * @return 
+     * @return
      */
     public static <T> DataKey<T> create(String name, Class<T> dataClass, boolean allowNull) {
         return create(name, dataClass, allowNull, null);
     }
-    
+
     /**
      * creates a data key with the given name, data type, the given permission
      * to allow null values and a default value. You can set the default value to
      * null to signal that there should be no default value.
-     * 
+     *
      * @param <T> the type
      * @param name the name of the key that is stored in the xdata file
      * @param dataClass the type's class
      * @param allowNull allow null values?
      * @param defaultValue the default value to use when there is no value set for this key.
      *                     If set to null this will be the same as setting no default value.
-     * @return 
+     * @return
      */
     public static <T> DataKey<T> create(String name, Class<T> dataClass, boolean allowNull, T defaultValue) {
         if (dataClass.isPrimitive()) {
@@ -129,5 +131,65 @@ public final class DataKey<T> implements Key<T> {
         }
         return new DataKey(name, dataClass, allowNull, defaultValue);
     }
-    
+
+    /**
+     * creates a data key with the given name and type. This data
+     * key allows for null values and sets no default value.
+     *
+     * @param <T> the type
+     * @param name the name of the key that is stored in the xdata file
+     * @param genType the type's class' generic type
+     * @return
+     */
+    public static <T> DataKey<T> create(String name, GenericType<T> genType) {
+        return create(name, genType.getRawType(), true, null);
+    }
+
+    /**
+     * creates a data key with the given name, type and default value. This
+     * data key allows for null values.
+     *
+     * @param <T> the type
+     * @param name the name of the key that is stored in the xdata file
+     * @param genType the type's class' generic type
+     * @param defaultValue the default value to use when there is no value set for this key.
+     *                     If set to null this will be the same as setting no default value.
+     * @return
+     */
+    public static <T> DataKey<T> create(String name, GenericType<T> genType, T defaultValue) {
+        return create(name, genType.getRawType(), true, defaultValue);
+    }
+
+    /**
+     * creates a data key with the given name, data type and the given permission
+     * to allow null values. No default value will be specified.
+     *
+     * @param <T> the type
+     * @param name the name of the key that is stored in the xdata file
+     * @param genType the type's class' generic type
+     * @param allowNull allow null values?
+     * @return
+     */
+    public static <T> DataKey<T> create(String name, GenericType<T> genType, boolean allowNull) {
+        return create(name, genType.getRawType(), allowNull, null);
+    }
+
+    /**
+     * creates a data key with the given name, data type, the given permission
+     * to allow null values and a default value. You can set the default value to
+     * null to signal that there should be no default value.
+     *
+     * @param <T> the type
+     * @param name the name of the key that is stored in the xdata file
+     * @param genType the type's class' generic type
+     * @param allowNull allow null values?
+     * @param defaultValue the default value to use when there is no value set for this key.
+     *                     If set to null this will be the same as setting no default value.
+     * @return
+     */
+    public static <T> DataKey<T> create(String name, GenericType<T> genType, boolean allowNull, T defaultValue) {
+        return create(name, genType.getRawType(), allowNull, defaultValue);
+
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Florian Frankenberger.
+ * Copyright (C) 2015 Florian Frankenberger.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,22 +18,17 @@
  */
 package com.moebiusgames.xdata;
 
+import com.moebiusgames.xdata.type.GenericType;
+
 /**
- * Marshals an object of type <T> into a DataNode and
- * back. This way it is always defined how to map fields
- * to fields of a type - therefore guaranteeing a maximum
- * of data portability.
+ * Same as a normal DataMarshaller only that it requires you
+ * to return a GenericType&lt;T&gt; instead of a Class&lt;T&gt;, which should
+ * save a lot of "casting" trouble when dealing with Generics.
  *
  * @author Florian Frankenberger
- * @param <T>
  */
-public interface DataMarshaller<T> extends AbstractDataMarshaller<T> {
+public interface GenericDataMarshaller<T> extends AbstractDataMarshaller<T> {
 
-    /**
-     * returns the actual class that this marshaller is capable of marshalling.
-     * @return
-     */
-    Class<T> getDataClass();
+    GenericType<T> getDataGenericType();
 
 }
-

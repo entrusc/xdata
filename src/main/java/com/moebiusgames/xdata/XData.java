@@ -30,10 +30,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -69,6 +72,7 @@ public class XData {
     private static final int VAL_ELEMENT = 1;
     private static final int VAL_LIST = 2;
     private static final int VAL_NODE = 3;
+    private static final int VAL_REFERENCE = 4;
 
     static {
         //default marshallers
@@ -149,7 +153,7 @@ public class XData {
      * @return
      * @throws IOException
      */
-    public static DataNode load(File file, DataMarshaller<?>... marshallers) throws IOException {
+    public static DataNode load(File file, AbstractDataMarshaller<?>... marshallers) throws IOException {
         return load(file, DUMMY_PROGRESS_LISTENER, marshallers);
     }
 
@@ -214,7 +218,7 @@ public class XData {
      * @return
      * @throws IOException
      */
-    public static DataNode load(File file, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
+    public static DataNode load(File file, ProgressListener progressListener, AbstractDataMarshaller<?>... marshallers) throws IOException {
         return load(file, progressListener, false, marshallers);
     }
 
@@ -248,7 +252,8 @@ public class XData {
      * @return
      * @throws IOException
      */
-    public static DataNode load(File file, ProgressListener progressListener, boolean ignoreMissingMarshallers, DataMarshaller<?>... marshallers) throws IOException {
+    public static DataNode load(File file, ProgressListener progressListener,
+            boolean ignoreMissingMarshallers, AbstractDataMarshaller<?>... marshallers) throws IOException {
         return load(new FileInputStream(file), progressListener, ignoreMissingMarshallers, marshallers);
     }
 
@@ -279,7 +284,7 @@ public class XData {
      * @return
      * @throws IOException
      */
-    public static DataNode load(InputStream in, DataMarshaller<?>... marshallers) throws IOException {
+    public static DataNode load(InputStream in, AbstractDataMarshaller<?>... marshallers) throws IOException {
         return load(in, DUMMY_PROGRESS_LISTENER, marshallers);
     }
 
@@ -312,7 +317,7 @@ public class XData {
      * @return
      * @throws IOException
      */
-    public static DataNode load(InputStream in, boolean ignoreMissingMarshallers, DataMarshaller<?>... marshallers) throws IOException {
+    public static DataNode load(InputStream in, boolean ignoreMissingMarshallers, AbstractDataMarshaller<?>... marshallers) throws IOException {
         return load(in, DUMMY_PROGRESS_LISTENER, ignoreMissingMarshallers, marshallers);
     }
 
@@ -344,7 +349,7 @@ public class XData {
      * @return
      * @throws IOException
      */
-    public static DataNode load(InputStream in, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
+    public static DataNode load(InputStream in, ProgressListener progressListener, AbstractDataMarshaller<?>... marshallers) throws IOException {
         return load(in, progressListener, false, marshallers);
     }
 
@@ -378,12 +383,13 @@ public class XData {
      * @return
      * @throws IOException
      */
-    public static DataNode load(InputStream in, ProgressListener progressListener, boolean ignoreMissingMarshallers, DataMarshaller<?>... marshallers) throws IOException {
-        final Map<String, DataMarshaller<?>> marshallerMap = generateMarshallerMap(false, Arrays.asList(marshallers));
+    public static DataNode load(InputStream in, ProgressListener progressListener,
+            boolean ignoreMissingMarshallers, AbstractDataMarshaller<?>... marshallers) throws IOException {
+        final Map<String, AbstractDataMarshaller<?>> marshallerMap = generateMarshallerMap(false, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(false, DEFAULT_MARSHALLERS));
         final DataNodePool dataNodePool = new DataNodePool();
 
-        DataInputStream dIn = new DataInputStream(new GZIPInputStream(in));
+        CountingDataInputStream dIn = new CountingDataInputStream(new GZIPInputStream(in));
         try {
             //check the header
             for (int i = 0; i < XDATA_HEADER.length; ++i) {
@@ -393,13 +399,16 @@ public class XData {
             }
 
             final Object raw = deSerialize(dIn, dataNodePool, progressListener);
-            if (!(raw instanceof DataNode)) {
+            if (!(raw instanceof ReferenceableMarshalledObject)) {
                 throw new IOException("first object in xdata file MUST be a DataNode but was "
                         + raw == null ? "null" : raw.getClass().getCanonicalName());
             }
-            final DataNode dataNode = (DataNode) raw;
 
-            final Object rawUnMarshalled = unMarshal(marshallerMap, dataNodePool, ignoreMissingMarshallers, dataNode);
+            final ReferenceableMarshalledObject referenceableObject = (ReferenceableMarshalledObject) raw;
+
+            final Map<Long, Object> refereceableObjects = new HashMap<Long, Object>();
+            final Object rawUnMarshalled = unMarshal(marshallerMap, refereceableObjects, dataNodePool,
+                    ignoreMissingMarshallers, referenceableObject.dataNode);
             if (!(rawUnMarshalled instanceof DataNode)) {
                 throw new IOException("first object in xdata file MUST be a DataNode but was "
                         + rawUnMarshalled == null ? "null" : rawUnMarshalled.getClass().getCanonicalName());
@@ -411,7 +420,8 @@ public class XData {
         }
     }
 
-    private static Object deSerialize(DataInputStream dIn, DataNodePool dataNodePool, ProgressListener progressListener) throws IOException {
+    private static Object deSerialize(CountingDataInputStream dIn, DataNodePool dataNodePool,
+            ProgressListener progressListener) throws IOException {
         final int type = dIn.readByte();
         switch(type) {
             case VAL_NULL:
@@ -438,7 +448,8 @@ public class XData {
             case VAL_NODE:
                 final DataNode dataNode = dataNodePool.getNew();
 
-                int length = dIn.readInt();
+                final long position = dIn.getPosition();
+                final int length = dIn.readInt();
                 progressListener.onTotalSteps(length);
 
                 for (int i = 0; i < length; ++i) {
@@ -448,30 +459,46 @@ public class XData {
 
                     progressListener.onStep();
                 }
-
-                return dataNode;
-
+                return new ReferenceableMarshalledObject(dataNode, position);
+            case VAL_REFERENCE:
+                final long streamPosition = dIn.readLong();
+                Reference reference = new Reference(streamPosition);
+                return reference;
             default:
                 throw new IOException("expected node (" + Integer.toHexString(type) + ") but found " + Integer.toHexString(type));
         }
 
     }
 
-    private static Object unMarshal(Map<String, DataMarshaller<?>> marshallerMap,
-            DataNodePool dataNodePool, boolean ignoreMissingMarshallers, DataNode node) throws IOException {
+    private static Object unMarshal(Map<String, AbstractDataMarshaller<?>> marshallerMap,
+            Map<Long, Object> referenceableObjects, DataNodePool dataNodePool,
+            boolean ignoreMissingMarshallers, DataNode node) throws IOException {
         final Map<String, Object> replacements = new HashMap<String, Object>();
 
         for (Entry<String, Object> entry : node.getAll()) {
             final String key = entry.getKey();
             final Object object = entry.getValue();
             if (object != null) {
-                if (object instanceof DataNode) {
-                    replacements.put(key, unMarshal(marshallerMap, dataNodePool, ignoreMissingMarshallers, (DataNode) object));
+                if (object instanceof ReferenceableMarshalledObject) {
+                    final ReferenceableMarshalledObject referenceableObject = (ReferenceableMarshalledObject) object;
+                    Object unmarshalledObject = unMarshal(marshallerMap, referenceableObjects,
+                            dataNodePool, ignoreMissingMarshallers, referenceableObject.dataNode);
+                    referenceableObjects.put(referenceableObject.positionInStream, unmarshalledObject);
+                    replacements.put(key, unmarshalledObject);
                 } else
-                    if (object instanceof List) {
-                        final List<Object> list = (List<Object>) object;
-                        unMarshalList(list, marshallerMap, dataNodePool, ignoreMissingMarshallers);
-                    }
+                    if (object instanceof Reference) {
+                        Reference reference = (Reference) object;
+                        Object unmarshalledObject = referenceableObjects.get(reference.positionInStream);
+                        if (unmarshalledObject == null) {
+                            throw new IOException("Could not find a referenced object (position " + reference.positionInStream + ")");
+                        }
+                        replacements.put(key, unmarshalledObject);
+                    } else
+                        if (object instanceof List) {
+                            final List<Object> list = (List<Object>) object;
+                            unMarshalList(list, marshallerMap, referenceableObjects,
+                                    dataNodePool, ignoreMissingMarshallers);
+                        }
             }
         }
 
@@ -499,18 +526,31 @@ public class XData {
         }
     }
 
-    private static void unMarshalList(final List<Object> list, Map<String, DataMarshaller<?>> marshallerMap,
-            DataNodePool dataNodePool, boolean ignoreMissingMarshallers) throws IOException {
+    private static void unMarshalList(final List<Object> list, Map<String, AbstractDataMarshaller<?>> marshallerMap,
+            Map<Long, Object> referenceableObjects, DataNodePool dataNodePool,
+            boolean ignoreMissingMarshallers) throws IOException {
         for (int i = 0; i < list.size(); ++i) {
             final Object aObject = list.get(i);
             if (aObject != null) {
-                if (aObject instanceof DataNode) {
-                    list.set(i, unMarshal(marshallerMap, dataNodePool, ignoreMissingMarshallers, (DataNode) aObject));
+                if (aObject instanceof ReferenceableMarshalledObject) {
+                    ReferenceableMarshalledObject referenceableObject = (ReferenceableMarshalledObject) aObject;
+                    final Object unmarshalledObject = unMarshal(marshallerMap, referenceableObjects, dataNodePool,
+                            ignoreMissingMarshallers, referenceableObject.dataNode);
+                    referenceableObjects.put(referenceableObject.positionInStream, unmarshalledObject);
+                    list.set(i, unmarshalledObject);
                 } else
-                    if (aObject instanceof List) {
-                        final List<Object> aList = (List<Object>) aObject;
-                        unMarshalList(aList, marshallerMap, dataNodePool, ignoreMissingMarshallers);
-                    }
+                    if (aObject instanceof Reference) {
+                        Reference reference = (Reference) aObject;
+                        Object unmarshalledObject = referenceableObjects.get(reference.positionInStream);
+                        if (unmarshalledObject == null) {
+                            throw new IOException("Could not find a referenced object (position " + reference.positionInStream + ")");
+                        }
+                        list.set(i, unmarshalledObject);
+                    } else
+                        if (aObject instanceof List) {
+                            final List<Object> aList = (List<Object>) aObject;
+                            unMarshalList(aList, marshallerMap, referenceableObjects, dataNodePool, ignoreMissingMarshallers);
+                        }
             }
         }
     }
@@ -638,10 +678,9 @@ public class XData {
      * @param marshallers
      * @throws IOException
      */
-    public static void store(DataNode node, OutputStream out, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
-        final Map<String, DataMarshaller<?>> marshallerMap = generateMarshallerMap(true, Arrays.asList(marshallers));
+    public static void store(DataNode node, OutputStream out, ProgressListener progressListener, AbstractDataMarshaller<?>... marshallers) throws IOException {
+        final Map<String, AbstractDataMarshaller<?>> marshallerMap = generateMarshallerMap(true, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(true, DEFAULT_MARSHALLERS));
-
 
         DataOutputStream dOut = new DataOutputStream(new GZIPOutputStream(out));
         try {
@@ -656,104 +695,151 @@ public class XData {
     }
 
     /**
-     * wraps an object using the data marshaller for that given object or returns
-     * a the object when it is already a DataNode, a primitive, array or string.
+     * wraps an object using the data marshaller for that given object
      *
      * @param marshallerMap
      * @param object
      * @return
      */
-    private static Object marshalObject(Map<String, DataMarshaller<?>> marshallerMap, Object object) {
-        if (!isMarshalled(object)) {
-            //can't be null here because it is not resolved: meaning, it is an instance of an unknown class
-            final Class<?> clazz = object.getClass();
+    private static DataNode marshalObject(Map<String, AbstractDataMarshaller<?>> marshallerMap, Object object) {
+        //can't be null here because it is not resolved: meaning, it is an instance of an unknown class
+        final Class<?> clazz = object.getClass();
 
-            if (object instanceof List) {
-                final List<Object> list = (List<Object>) object;
-                final List<Object> newList = new ArrayList<Object>(list.size());
+        final DataMarshaller<Object> serializer = (DataMarshaller<Object>) marshallerMap.get(clazz.getCanonicalName());
+        if (serializer == null) {
+            throw new IllegalStateException("No serializer defined for class " + clazz.getCanonicalName());
+        }
+        final DataNode node = serializer.marshal(object);
+        node.setObject(META_CLASS_NAME, serializer.getDataClassName());
+        return node;
+    }
 
-                for (int i = 0; i < list.size(); ++i) {
-                    final Object aObject = list.get(i);
-                    newList.add(marshalObject(marshallerMap, aObject));
-                }
-
-                return newList;
+    /**
+     * processes one element and either serializes it directly to the stream, or pushes
+     * a corresponding frame to the stack.
+     *
+     * @param element
+     * @param stack
+     * @param dOut
+     * @param marshallerMap
+     * @param serializedObjects
+     * @param testSerializedObject
+     * @return true if a new element has been pushed to the stack, false otherwise
+     * @throws IOException
+     */
+    private static boolean processElement(Object element, Deque<SerializationFrame> stack, DataOutputStream dOut,
+            Map<String, AbstractDataMarshaller<?>> marshallerMap,
+            Map<SerializedObject, SerializedObject> serializedObjects,
+            SerializedObject testSerializedObject) throws IOException {
+        if (element instanceof List) {
+            stack.push(new ListFrame(element, (List<?>) element));
+            return true;
+        } else
+            if (element == null || isPrimitiveOrString(element)) {
+                serializePrimitive(dOut, element);
             } else {
-                final DataMarshaller<Object> serializer = (DataMarshaller<Object>) marshallerMap.get(clazz.getCanonicalName());
-                if (serializer == null) {
-                    throw new IllegalStateException("No serializer defined for class " + clazz.getCanonicalName());
+                //unmarshalled object or data node
+                testSerializedObject.object = element;
+                if (serializedObjects.containsKey(testSerializedObject)) {
+                    final SerializedObject serializedObject = serializedObjects.get(testSerializedObject);
+                    serializeReference(serializedObject, dOut);
+                } else {
+                    DataNodeFrame dataNodeFrame;
+                    if (element instanceof DataNode) {
+                        dataNodeFrame = new DataNodeFrame(element, (DataNode) element);
+                    } else {
+                        dataNodeFrame = new DataNodeFrame(element, marshalObject(marshallerMap, element));
+                    }
+                    stack.push(dataNodeFrame);
+                    return true;
                 }
-                final DataNode node = serializer.marshal(object);
-                node.setObject(META_CLASS_NAME, serializer.getDataClassName());
-                return node;
+            }
+        return false;
+    }
+
+    /**
+     * actually serializes the data
+     *
+     * @param marshallerMap
+     * @param dOut
+     * @param primaryNode
+     * @param progressListener
+     * @throws IOException
+     */
+    private static void serialize(Map<String, AbstractDataMarshaller<?>> marshallerMap,
+            DataOutputStream dOut, DataNode primaryNode, ProgressListener progressListener) throws IOException {
+
+        //a map containing all serialized objects. This is used
+        //to make sure that we store each object only once.
+        final Map<SerializedObject, SerializedObject> serializedObjects = new HashMap<SerializedObject, SerializedObject>();
+
+        final Deque<SerializationFrame> stack = new LinkedList<SerializationFrame>();
+        final DataNodeFrame primaryDataNodeFrame = new DataNodeFrame(null, primaryNode);
+        
+        progressListener.onTotalSteps(primaryDataNodeFrame.entries.size());
+        stack.add(primaryDataNodeFrame);
+
+
+        final SerializedObject testSerializedObject = new SerializedObject();
+
+        while (!stack.isEmpty()) {
+            final SerializationFrame frame = stack.peek();
+
+            //writes the header for that frame (if needed)
+            frame.writeHeader(dOut);
+
+            if (frame.hasNext()) {
+                while (frame.hasNext()) {
+                    if (frame.next(stack, dOut, marshallerMap,
+                            serializedObjects, testSerializedObject)) {
+                        break;
+                    }
+                }
+
+                if (frame == primaryDataNodeFrame) {
+                    progressListener.onStep();
+                }
+            } else {
+                stack.pop();
+
+                //remember serialized object's addresses
+                if (frame instanceof DataNodeFrame) {
+                    DataNodeFrame dataNodeFrame = (DataNodeFrame) frame;
+                    SerializedObject newSerializedObject = new SerializedObject();
+                    newSerializedObject.object = frame.object;
+                    newSerializedObject.positionInStream = dataNodeFrame.positionInStream;
+                    serializedObjects.put(newSerializedObject, newSerializedObject);
+                }
             }
         }
-        return object;
+    }
+
+    private static void serializeReference(SerializedObject ref, DataOutputStream dOut) throws IOException {
+        dOut.writeByte(VAL_REFERENCE);
+        dOut.writeLong(ref.positionInStream);
     }
 
     /**
-     * serializes a data node that just contains primitives or references to other data
-     * nodes.
-     *
-     * @param dataNode
-     */
-    private static void serialize(Map<String, DataMarshaller<?>> marshallerMap,
-            DataOutputStream dOut, DataNode dataNode, ProgressListener progressListener) throws IOException {
-        dOut.writeByte(VAL_NODE);
-        dOut.writeInt(dataNode.getSize());
-
-        progressListener.onTotalSteps(dataNode.getSize());
-
-        for (Entry<String, Object> entry : dataNode.getAll()) {
-            final String key = entry.getKey();
-            final Object object = entry.getValue();
-
-            final Object resolvedObject = marshalObject(marshallerMap, object);
-
-            dOut.writeUTF(key);
-            serializeElement(marshallerMap, dOut, resolvedObject);
-
-            progressListener.onStep();
-        }
-    }
-
-    /**
-     * serializes a single object
+     * serializes a primitive or null
      *
      * @param serializerMap
      * @param dOut
-     * @param resolvedObject
+     * @param primitive
      * @throws IOException
      */
-    private static void serializeElement(Map<String, DataMarshaller<?>> marshallerMap,
-            DataOutputStream dOut, Object resolvedObject) throws IOException {
-        if (resolvedObject == null) {
+    private static void serializePrimitive(DataOutputStream dOut, Object primitive) throws IOException {
+        if (primitive == null) {
             dOut.writeByte(VAL_NULL);
-        } else
-            if (resolvedObject instanceof List) {
-                final List<Object> list = (List<Object>) resolvedObject;
-                final int size = list.size();
-
-                dOut.writeByte(VAL_LIST);
-                dOut.writeInt(size);
-
-                for (int i = 0; i < size; ++i) {
-                    serializeElement(marshallerMap, dOut, list.get(i));
-                }
-            } else
-                if (resolvedObject instanceof DataNode) {
-                    final DataNode aDataNode = (DataNode) resolvedObject;
-                    serialize(marshallerMap, dOut, aDataNode, DUMMY_PROGRESS_LISTENER);
-                } else {
-                    dOut.writeByte(VAL_ELEMENT);
-                    final Class<?> resolvedObjectClass = resolvedObject.getClass();
-                    Serializer<Object> serializer = (Serializer<Object>) PRIMITIVE_SERIALIZERS_BY_CLASS.get(resolvedObjectClass);
-                    if (serializer == null) {
-                        throw new IllegalStateException("Can't serialize resolved class " + resolvedObjectClass.getCanonicalName());
-                    }
-                    dOut.writeByte(serializer.getSerializerId());
-                    serializer.serialize(resolvedObject, dOut);
-                }
+        } else {
+            dOut.writeByte(VAL_ELEMENT);
+            final Class<?> resolvedObjectClass = primitive.getClass();
+            Serializer<Object> serializer = (Serializer<Object>) PRIMITIVE_SERIALIZERS_BY_CLASS.get(resolvedObjectClass);
+            if (serializer == null) {
+                throw new IllegalStateException("Can't serialize resolved class " + resolvedObjectClass.getCanonicalName());
+            }
+            dOut.writeByte(serializer.getSerializerId());
+            serializer.serialize(primitive, dOut);
+        }
     }
 
     /**
@@ -769,17 +855,251 @@ public class XData {
             || object instanceof DataNode);
     }
 
-    private static Map<String, DataMarshaller<?>> generateMarshallerMap(boolean fullyQualifiedClassName, List<DataMarshaller<?>> marshallers) {
-        final Map<String, DataMarshaller<?>> map = new HashMap<String, DataMarshaller<?>>();
-        for (DataMarshaller<?> marshaller : marshallers) {
-            final String key = fullyQualifiedClassName ? marshaller.getDataClass().getCanonicalName() : marshaller.getDataClassName();
+    /**
+     * checks if the given object is not null and has a primitive
+     * serializer.
+     *
+     * @param object
+     * @return
+     */
+    private static boolean isPrimitiveOrString(Object object) {
+        return object != null && PRIMITIVE_SERIALIZERS_BY_CLASS.containsKey(object.getClass());
+    }
+
+    private static boolean isPrimitiveOrStringOrList(Object object) {
+        return object != null && (PRIMITIVE_SERIALIZERS_BY_CLASS.containsKey(object.getClass()) || object instanceof List);
+    }
+
+    /**
+     * checks if this is an object other than a primitive type, a list or a data node
+     * @param object
+     * @return
+     */
+    private static boolean isObject(Object object) {
+        return object != null && !isPrimitiveOrStringOrList(object);// && !(object instanceof DataNode);
+    }
+
+    private static Map<String, AbstractDataMarshaller<?>> generateMarshallerMap(boolean fullyQualifiedClassName,
+            List<? extends AbstractDataMarshaller<?>> marshallers) {
+        final Map<String, AbstractDataMarshaller<?>> map = new HashMap<String, AbstractDataMarshaller<?>>();
+        for (AbstractDataMarshaller<?> marshaller : marshallers) {
+            Class<?> marshallerDataClass;
+            if (marshaller instanceof GenericDataMarshaller) {
+                marshallerDataClass = ((GenericDataMarshaller) marshaller).getDataGenericType().getRawType();
+            } else
+                if (marshaller instanceof DataMarshaller) {
+                    marshallerDataClass = ((DataMarshaller) marshaller).getDataClass();
+                } else {
+                    throw new IllegalArgumentException("You are not to use AbstractDataMarshaller directly, please use one of its descendents!");
+                }
+            final String key = fullyQualifiedClassName ? marshallerDataClass.getCanonicalName() : marshaller.getDataClassName();
             map.put(key, marshaller);
             map.putAll(generateMarshallerMap(fullyQualifiedClassName, marshaller.getRequiredMarshallers()));
         }
         return map;
     }
 
-    // --- Serializers ---
+    // ####################################
+    // ## DeSerialization Helper Classes ##
+    // ####################################
+
+
+    private static class ReferenceableMarshalledObject {
+        private final DataNode dataNode;
+        private final long positionInStream;
+
+        public ReferenceableMarshalledObject(DataNode dataNode, long positionInStream) {
+            this.dataNode = dataNode;
+            this.positionInStream = positionInStream;
+        }
+    }
+
+    private static class Reference {
+        private final long positionInStream;
+
+        public Reference(long positionInStream) {
+            this.positionInStream = positionInStream;
+        }
+
+    }
+
+    // ##################################
+    // ## Serialization Helper Classes ##
+    // ##################################
+
+    private static class SerializedObject {
+        private Object object;
+        private long positionInStream;
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 97 * hash + (this.object != null ? this.object.hashCode() : 0);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final SerializedObject other = (SerializedObject) obj;
+            return this.object == other.object;
+        }
+    }
+
+    private static abstract class SerializationFrame {
+        private final Object object;
+        private boolean headerWritten = false;
+
+        public SerializationFrame(Object object) {
+            this.object = object;
+        }
+
+        public void writeHeader(DataOutputStream dOut) throws IOException {
+            if (!headerWritten) {
+                this.doWriteHeader(dOut);
+                this.headerWritten = true;
+            }
+        }
+
+        public abstract void doWriteHeader(DataOutputStream dOut) throws IOException;
+
+        public abstract boolean hasNext();
+
+        public abstract boolean next(Deque<SerializationFrame> stack, DataOutputStream dOut, Map<String,
+                AbstractDataMarshaller<?>> marshallerMap,
+                Map<SerializedObject, SerializedObject> serializedObjects,
+                SerializedObject testSerializedObject) throws IOException;
+    }
+
+    private static class ListFrame extends SerializationFrame {
+        private final List<Object> entries = new LinkedList<Object>();
+
+        public ListFrame(Object object, List<?> list) {
+            super(object);
+            this.entries.addAll(list);
+        }
+
+        @Override
+        public void doWriteHeader(DataOutputStream dOut) throws IOException {
+                dOut.writeByte(VAL_LIST);
+                dOut.writeInt(this.entries.size());
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !this.entries.isEmpty();
+        }
+
+        @Override
+        public boolean next(Deque<SerializationFrame> stack, DataOutputStream dOut,
+                Map<String, AbstractDataMarshaller<?>> marshallerMap,
+                Map<SerializedObject, SerializedObject> serializedObjects,
+                SerializedObject testSerializedObject) throws IOException {
+            final Object element = this.entries.remove(0);
+
+            return processElement(element, stack, dOut, marshallerMap,
+                    serializedObjects, testSerializedObject);
+        }
+
+    }
+
+    private static class DataNodeFrame extends SerializationFrame {
+        private final DataNode dataNode;
+        private long positionInStream;
+        private final Queue<Entry<String, Object>> entries = new LinkedList<Entry<String, Object>>();
+
+        public DataNodeFrame(Object object, DataNode dataNode) {
+            super(object);
+            this.dataNode = dataNode;
+            this.entries.addAll(dataNode.getAll());
+        }
+
+        @Override
+        public void doWriteHeader(DataOutputStream dOut) throws IOException {
+            this.positionInStream = dOut.size();
+            dOut.writeByte(VAL_NODE);
+            dOut.writeInt(dataNode.getSize());
+        }
+
+        @Override
+        public boolean hasNext() {
+            return !entries.isEmpty();
+        }
+
+        @Override
+        public boolean next(Deque<SerializationFrame> stack, DataOutputStream dOut,
+                Map<String, AbstractDataMarshaller<?>> marshallerMap,
+                Map<SerializedObject, SerializedObject> serializedObjects,
+                SerializedObject testSerializedObject) throws IOException {
+            final Entry<String, Object> entry = entries.poll();
+
+            //write the field's key
+            dOut.writeUTF(entry.getKey());
+
+            return processElement(entry.getValue(), stack, dOut, marshallerMap,
+                    serializedObjects, testSerializedObject);
+        }
+
+    }
+
+    // #########################
+    // ## Specialized Streams ##
+    // #########################
+
+    private static class CountingDataInputStream extends DataInputStream {
+
+        private final CountingInputStream countingInputStream;
+
+        public CountingDataInputStream(InputStream in) {
+            super(new CountingInputStream(in));
+            this.countingInputStream = (CountingInputStream) this.in;
+        }
+
+        /**
+         * returns the current position of the stream
+         * @return
+         */
+        public long getPosition() {
+            return this.countingInputStream.getPosition();
+        }
+
+        @Override
+        public int read() throws IOException {
+            return super.read();
+        }
+
+    }
+
+    private static class CountingInputStream extends InputStream {
+
+        private final InputStream in;
+        private long position = -1;
+
+        public CountingInputStream(InputStream in) {
+            this.in = in;
+        }
+
+        public long getPosition() {
+            return position;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int read = in.read();
+            position++;
+            return read;
+        }
+    }
+
+    // ##########################################
+    // ## Serializers for primitive data types ##
+    // ##########################################
+
     private static class BooleanSerializer implements Serializer<Boolean> {
 
         @Override
@@ -1013,25 +1333,18 @@ public class XData {
     private static class DataNodePool {
         private final List<DataNode> dataNodes = new ArrayList<DataNode>();
 
-        //DEBUG
-        private volatile int givenBackCounter = 0;
-
         public synchronized DataNode getNew() {
             if (dataNodes.isEmpty()) {
                 return new DataNode();
             } else {
-                return dataNodes.remove(0);
+                return dataNodes.remove(dataNodes.size() - 1);
             }
         }
 
         public synchronized void giveBack(DataNode dataNode) {
             dataNode.clear();
             this.dataNodes.add(dataNode);
-            givenBackCounter++;
         }
 
-        public int getGivenBackCounter() {
-            return givenBackCounter;
-        }
     }
 }
