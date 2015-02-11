@@ -1,30 +1,41 @@
 xdata
 =====
-Xdata is a java library for storing and loading xdata files. The xdata file format 
+xdata is a java library for storing and loading xdata files. The xdata file format 
 was initially developed as an universal file format for the science fiction voxel 
 game Xcylin (http://xcylin.com) but is suitable for a lot of other applications
 as well. 
 
-Xdata format highlights:
+xdata format highlights:
 
 * separation of data model and data itself using keys
 * typed and paramterized keys
 * tree structure to organize data
 * mapping of any type using the DataMarshaller interface
 * support for lists of any type
+* size of storable objects is only limited by memory
 * compression using standard gzip
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.moebiusgames/xdata/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.moebiusgames/xdata)
 
 license
 =======
-Xdata is licensed under LGPL 2.1 and can therefore be used in any project, even
+xdata is licensed under LGPL 2.1 and can therefore be used in any project, even
 for commercial ones.
+
+changelog
+=========
+
+* 1.5
+  * New way to use generic types in keys. This helps to get rid of a lot of ugly casting. See DataKey.createKey(String name, GenericType<T> genType) for more infos.
+  * GenericType<T> can now also be used when specifying the type in a custom Marshaller. See the new GenericDataMarshaller class.
+  * XData.store and XData.load now are recursion free (complete rewrite), so that we don't run into StackOverflowExceptions with big objects.
+  * Also XData.load now deserializes and unmarshalles objects on the fly and does not need to first construct the whole tree in memory before unmarshalling.
+  * Objects that are used more than once within one persisted tree are now getting stored only once. All other occurances are replaced by references to the first one. Note that this feature does not work for recursive or cyclic dependencies of stored objects.
 
 xdata file format
 =================
-The xdata file format stores information as so called data nodes. These nodes look for
-example like this:
+The xdata file format stores information as so called data nodes (DataNode class). These 
+nodes look for example like this:
 
     O Data Node
     |- short_key                      = 13
@@ -64,7 +75,7 @@ all the Cars data to a DataNode. The actual data that is stored looks like this:
     O Data Node
     |---O car_info: DataNode
         |---O car: DataNode
-            |- _meta_classid                  = 0
+            |- _meta_classname                  = my.car
             |---O check_dates: List (0)
             |---O build_date: DataNode
                 |- timestamp                      = 1382191079972
@@ -73,9 +84,6 @@ all the Cars data to a DataNode. The actual data that is stored looks like this:
             |- horse_power                    = 180.5
     |- string                         = some car info
 
-And with this data a class registry is persisted that contains the mapping from 
-_meta_classid to the real class identifier. This helps later to look up the
-correct marshaller to unmarshal the class.
 
 So now you might ask how complex this marshaller looks like? Not very, because xdata
 was design to give you as much power as possible while requiring you to write
