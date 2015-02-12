@@ -3,7 +3,7 @@
 
     <groupId>com.moebiusgames</groupId>
     <artifactId>xdata</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>1.5</version>
     <packaging>jar</packaging>
 
     <name>xdata</name>
