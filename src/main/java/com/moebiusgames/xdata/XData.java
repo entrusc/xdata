@@ -175,7 +175,7 @@ public class XData {
      * @return
      * @throws IOException
      */
-    public static DataNode load(File file, boolean ignoreMissingMarshallers, DataMarshaller<?>... marshallers) throws IOException {
+    public static DataNode load(File file, boolean ignoreMissingMarshallers, AbstractDataMarshaller<?>... marshallers) throws IOException {
         return load(file, DUMMY_PROGRESS_LISTENER, ignoreMissingMarshallers, marshallers);
     }
 
@@ -518,7 +518,7 @@ public class XData {
      * @param marshallers
      * @throws IOException
      */
-    public static void store(DataNode node, File file, DataMarshaller<?>... marshallers) throws IOException {
+    public static void store(DataNode node, File file, AbstractDataMarshaller<?>... marshallers) throws IOException {
         store(node, file, DUMMY_PROGRESS_LISTENER, marshallers);
     }
 
@@ -550,7 +550,7 @@ public class XData {
      * @param marshallers
      * @throws IOException
      */
-    public static void store(DataNode node, File file, ProgressListener progressListener, DataMarshaller<?>... marshallers) throws IOException {
+    public static void store(DataNode node, File file, ProgressListener progressListener, AbstractDataMarshaller<?>... marshallers) throws IOException {
         store(node, new FileOutputStream(file), progressListener, marshallers);
     }
 
@@ -582,7 +582,7 @@ public class XData {
      * @param marshallers
      * @throws IOException
      */
-    public static void store(DataNode node, OutputStream out, DataMarshaller<?>... marshallers) throws IOException {
+    public static void store(DataNode node, OutputStream out, AbstractDataMarshaller<?>... marshallers) throws IOException {
         store(node, out, DUMMY_PROGRESS_LISTENER, marshallers);
     }
 
