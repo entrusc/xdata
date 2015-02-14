@@ -34,7 +34,7 @@ import java.util.List;
 public class URLMarshaller implements DataMarshaller<URL> {
 
     private static final DataKey<String> KEY_URL_STRING = DataKey.create("url_string", String.class, false);
-    
+
     @Override
     public String getDataClassName() {
         return "xdata.url";

@@ -21,12 +21,17 @@ package com.moebiusgames.xdata;
 import com.moebiusgames.xdata.marshaller.DateMarshaller;
 import com.moebiusgames.xdata.type.GenericType;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -96,6 +101,90 @@ public class XDataTest {
         assertEquals(42.24f, (float) restoredNode.getObject(KEY_FLOAT), 0.0001f);
         assertEquals(Math.PI, (double) restoredNode.getObject(KEY_DOUBLE), 0.0001f);
         assertEquals(Arrays.asList(new String[] { "abc", "def", "ghi" }), restoredNode.getObjectList(KEY_STRING_LIST));
+    }
+
+    /**
+     * A simple store and retrieve test (no marshalling)
+     * @throws java.io.IOException
+     */
+    @Test(expected = IOException.class)
+    public void checksumTest() throws IOException {
+        File tmpFile = File.createTempFile("xdata_test_checksum", ".xdata");
+        System.out.println(tmpFile);
+        tmpFile.deleteOnExit();
+
+        DataNode dataNode = new DataNode();
+        dataNode.setObject(KEY_BOOL, true);
+        dataNode.setObject(KEY_STRING, "blafasel");
+        dataNode.setObject(KEY_BYTE, (byte) 0x05);
+        dataNode.setObject(KEY_CHAR, 'ö');
+        dataNode.setObject(KEY_SHORT, (short) 13);
+        dataNode.setObject(KEY_INT, 67567);
+        dataNode.setObject(KEY_LONG, 786783647846876879L);
+        dataNode.setObject(KEY_FLOAT, 42.24f);
+        dataNode.setObject(KEY_DOUBLE, Math.PI);
+        dataNode.setObjectList(KEY_STRING_LIST, Arrays.asList(new String[] { "abc", "def", "ghi" }));
+
+        XData.store(dataNode, tmpFile, true);
+
+        try {
+            XData.load(tmpFile, XData.ChecksumValidation.VALIDATE_OR_THROW_EXCEPTION);
+        } catch (IOException e) {
+            throw new IllegalStateException("No IOException expected here!", e);
+        }
+
+        //corrupt file
+        File unpackedFile = unpack(tmpFile);
+        RandomAccessFile rFile = new RandomAccessFile(unpackedFile, "rw");
+        rFile.seek(34);
+        rFile.write(0x00);
+        rFile.close();
+        File packedFile = pack(unpackedFile);
+
+        XData.load(packedFile, XData.ChecksumValidation.VALIDATE_OR_THROW_EXCEPTION);
+    }
+
+    private File unpack(File file) throws IOException {
+        File tmpFile = File.createTempFile("xdata_test_unpacked", ".xdata");
+//        System.out.println("unpacked: " + tmpFile);
+        tmpFile.deleteOnExit();
+
+        GZIPInputStream in = new GZIPInputStream(new FileInputStream(file));
+        FileOutputStream out = new FileOutputStream(tmpFile);
+        int read = 0;
+        byte[] buffer = new byte[256];
+        do {
+            read = in.read(buffer);
+            if (read > 0) {
+                out.write(buffer, 0, read);
+            }
+        } while (read >= 0);
+
+        in.close();
+        out.close();
+        return tmpFile;
+    }
+
+    private File pack(File file) throws IOException {
+        File tmpFile = File.createTempFile("xdata_test_packed", ".xdata");
+//        System.out.println("packed: " + tmpFile);
+        tmpFile.deleteOnExit();
+
+        FileInputStream in = new FileInputStream(file);
+        GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(tmpFile));
+        int read = 0;
+        byte[] buffer = new byte[256];
+        do {
+            read = in.read(buffer);
+            if (read > 0) {
+                out.write(buffer, 0, read);
+            }
+        } while (read >= 0);
+
+        in.close();
+        out.flush();
+        out.close();
+        return tmpFile;
     }
 
     @Test

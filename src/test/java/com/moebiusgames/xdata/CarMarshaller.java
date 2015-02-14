@@ -29,7 +29,7 @@ import java.util.List;
 
 /**
  * A sample marshaller to marshal a Car object
- * 
+ *
  * @author Florian Frankenberger
  */
 public class CarMarshaller implements DataMarshaller<Car> {
@@ -38,7 +38,7 @@ public class CarMarshaller implements DataMarshaller<Car> {
     private static final DataKey<Float> KEY_HORSE_POWER = DataKey.create("horse_power", Float.class);
     private static final DataKey<Date> KEY_BUILD_DATE = DataKey.create("build_date", Date.class);
     private static final ListDataKey<Date> KEY_CHECK_DATES = ListDataKey.create("check_dates", Date.class);
-    
+
     @Override
     public String getDataClassName() {
         return "xdata.test.car";
@@ -48,7 +48,7 @@ public class CarMarshaller implements DataMarshaller<Car> {
     public Class<Car> getDataClass() {
         return Car.class;
     }
-    
+
     @Override
     public DataNode marshal(Car object) {
         DataNode node = new DataNode();

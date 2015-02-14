@@ -26,18 +26,18 @@ import java.util.List;
 
 /**
  * A sample marshaller to marshal a Car object
- * 
+ *
  * @author Florian Frankenberger
  */
 public class JetMarshaller implements DataMarshaller<Jet> {
 
     private static final DataKey<Float> KEY_SPEED = DataKey.create("speed", Float.class);
-    
+
     @Override
     public String getDataClassName() {
         return "xdata.test.jet";
     }
-    
+
     @Override
     public Class<Jet> getDataClass() {
         return Jet.class;

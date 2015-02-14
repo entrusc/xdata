@@ -27,13 +27,13 @@ import java.util.List;
 
 /**
  * Marshalls {@link java.util.Date}
- * 
+ *
  * @author Florian Frankenberger
  */
 public class DateMarshaller implements DataMarshaller<Date> {
 
     private static final DataKey<Long> KEY_TIMESTAMP = DataKey.create("timestamp", Long.class);
-    
+
     @Override
     public String getDataClassName() {
         return "xdata.date";

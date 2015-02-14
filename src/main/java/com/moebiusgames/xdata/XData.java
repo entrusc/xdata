@@ -20,6 +20,9 @@ package com.moebiusgames.xdata;
 
 import com.moebiusgames.xdata.marshaller.DateMarshaller;
 import com.moebiusgames.xdata.marshaller.URLMarshaller;
+import com.moebiusgames.xdata.streams.CountingDataInputStream;
+import com.moebiusgames.xdata.streams.MessageDigestInputStream;
+import com.moebiusgames.xdata.streams.MessageDigestOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -28,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -58,6 +62,27 @@ import java.util.zip.GZIPOutputStream;
  * @author Florian Frankenberger
  */
 public class XData {
+
+    private static final String CHECKSUM_ALGORITHM = "SHA-256";
+    private static final int CHECKSUM_ALGORITHM_LENGTH = 32;
+
+    public static enum ChecksumValidation {
+        /**
+         * no validation will occur
+         */
+        NONE,
+
+        /**
+         * validates the data only if there is an embedded checksum
+         */
+        VALIDATE_IF_AVAILABLE,
+
+        /**
+         * validates the checksum but throws an exception if there
+         * is no checksum embedded within the xfile stream
+         */
+        VALIDATE_OR_THROW_EXCEPTION
+    }
 
     private static final DummyProgressListener DUMMY_PROGRESS_LISTENER = new DummyProgressListener();
 
@@ -169,6 +194,38 @@ public class XData {
      * to work.
      *
      * @param file
+     * @param checksumValidation
+     * @param marshallers
+     * @return
+     * @throws IOException
+     */
+    public static DataNode load(File file, ChecksumValidation checksumValidation, AbstractDataMarshaller<?>... marshallers) throws IOException {
+        return load(file, checksumValidation, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+
+    /**
+     * loads a xdata file from disk using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param file
      * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
      *                                 when a marshaller is missing.
      * @param marshallers
@@ -234,6 +291,40 @@ public class XData {
      * to work.
      *
      * @param file
+     * @param checksumValidation
+     * @param progressListener
+     * @param marshallers
+     * @return
+     * @throws IOException
+     */
+    public static DataNode load(File file, ChecksumValidation checksumValidation, ProgressListener progressListener,
+            AbstractDataMarshaller<?>... marshallers) throws IOException {
+        return load(file, checksumValidation, progressListener, false, marshallers);
+    }
+
+    /**
+     * loads a xdata file from disk using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param file
      * @param progressListener
      * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
      *                                 when a marshaller is missing.
@@ -243,7 +334,43 @@ public class XData {
      */
     public static DataNode load(File file, ProgressListener progressListener,
             boolean ignoreMissingMarshallers, AbstractDataMarshaller<?>... marshallers) throws IOException {
-        return load(new FileInputStream(file), progressListener, ignoreMissingMarshallers, marshallers);
+        return load(new FileInputStream(file), ChecksumValidation.VALIDATE_IF_AVAILABLE, progressListener, ignoreMissingMarshallers, marshallers);
+    }
+
+    /**
+     * loads a xdata file from disk using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param file
+     * @param checksumValidation
+     * @param progressListener
+     * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
+     *                                 when a marshaller is missing.
+     * @param marshallers
+     * @return
+     * @throws IOException
+     */
+    public static DataNode load(File file, ChecksumValidation checksumValidation, ProgressListener progressListener,
+            boolean ignoreMissingMarshallers, AbstractDataMarshaller<?>... marshallers) throws IOException {
+        return load(new FileInputStream(file), checksumValidation, progressListener, ignoreMissingMarshallers, marshallers);
     }
 
     /**
@@ -300,6 +427,39 @@ public class XData {
      * to work.
      *
      * @param in
+     * @param checksumValidation
+     * @param marshallers
+     * @return
+     * @throws IOException
+     */
+    public static DataNode load(InputStream in, ChecksumValidation checksumValidation,
+            AbstractDataMarshaller<?>... marshallers) throws IOException {
+        return load(in, checksumValidation, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+
+    /**
+     * loads a xdata file from from an inputstream using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param in
      * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
      *                                 when a marshaller is missing.
      * @param marshallers
@@ -307,7 +467,7 @@ public class XData {
      * @throws IOException
      */
     public static DataNode load(InputStream in, boolean ignoreMissingMarshallers, AbstractDataMarshaller<?>... marshallers) throws IOException {
-        return load(in, DUMMY_PROGRESS_LISTENER, ignoreMissingMarshallers, marshallers);
+        return load(in, ChecksumValidation.VALIDATE_IF_AVAILABLE, DUMMY_PROGRESS_LISTENER, ignoreMissingMarshallers, marshallers);
     }
 
     /**
@@ -339,7 +499,41 @@ public class XData {
      * @throws IOException
      */
     public static DataNode load(InputStream in, ProgressListener progressListener, AbstractDataMarshaller<?>... marshallers) throws IOException {
-        return load(in, progressListener, false, marshallers);
+        return load(in, ChecksumValidation.VALIDATE_IF_AVAILABLE, progressListener, false, marshallers);
+    }
+
+    /**
+     * loads a xdata file from from an inputstream using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param in
+     * @param checksumValidation
+     * @param progressListener
+     * @param marshallers
+     * @return
+     * @throws IOException
+     */
+    public static DataNode load(InputStream in, ChecksumValidation checksumValidation, ProgressListener progressListener,
+            AbstractDataMarshaller<?>... marshallers) throws IOException {
+        return load(in, checksumValidation, progressListener, false, marshallers);
     }
 
     /**
@@ -365,6 +559,7 @@ public class XData {
      * to work.
      *
      * @param in
+     * @param checksumValidation
      * @param progressListener
      * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
      *                                 when a marshaller is missing.
@@ -372,13 +567,21 @@ public class XData {
      * @return
      * @throws IOException
      */
-    public static DataNode load(InputStream in, ProgressListener progressListener,
+    public static DataNode load(InputStream in, ChecksumValidation checksumValidation, ProgressListener progressListener,
             boolean ignoreMissingMarshallers, AbstractDataMarshaller<?>... marshallers) throws IOException {
         final Map<String, AbstractDataMarshaller<?>> marshallerMap = generateMarshallerMap(false, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(false, DEFAULT_MARSHALLERS));
 
-        CountingDataInputStream dIn = new CountingDataInputStream(new GZIPInputStream(in));
+        final GZIPInputStream gzipInputStream = new GZIPInputStream(in);
+
         try {
+            InputStream inputStream = gzipInputStream;
+            MessageDigestInputStream messageDigestInputStream = null;
+            if (checksumValidation != ChecksumValidation.NONE) {
+                messageDigestInputStream = new MessageDigestInputStream(inputStream, CHECKSUM_ALGORITHM);
+                inputStream = messageDigestInputStream;
+            }
+            CountingDataInputStream dIn = new CountingDataInputStream(inputStream);
             //check the header
             for (int i = 0; i < XDATA_HEADER.length; ++i) {
                 if (dIn.readByte() != XDATA_HEADER[i]) {
@@ -389,9 +592,38 @@ public class XData {
             final DataNode firstDataNode = deSerialize(dIn, marshallerMap,
                     ignoreMissingMarshallers, progressListener);
 
+            byte[] checksumCalcualted = null;
+            if (checksumValidation != ChecksumValidation.NONE) {
+                checksumCalcualted = messageDigestInputStream.getDigest();
+            }
+            final int checksumAvailable = dIn.read();
+            if (checksumValidation == ChecksumValidation.VALIDATE_IF_AVAILABLE
+                    || checksumValidation == ChecksumValidation.VALIDATE_OR_THROW_EXCEPTION) {
+                byte[] checksumValue = new byte[CHECKSUM_ALGORITHM_LENGTH];
+                int readBytes = dIn.read(checksumValue);
+
+                if (checksumValidation == ChecksumValidation.VALIDATE_IF_AVAILABLE
+                        && readBytes == CHECKSUM_ALGORITHM_LENGTH) {
+                    if (!Arrays.equals(checksumValue, checksumCalcualted)) {
+                        throw new IOException("Checksum is invalid.");
+                    }
+                } else
+                    if (checksumValidation == ChecksumValidation.VALIDATE_OR_THROW_EXCEPTION) {
+                        if (checksumAvailable == -1 || readBytes != CHECKSUM_ALGORITHM_LENGTH) {
+                            throw new IOException("File contains no embedded checksum");
+                        }
+                        if (!Arrays.equals(checksumValue, checksumCalcualted)) {
+                            throw new IOException("Checksum is invalid.");
+                        }
+                    }
+
+            }
+
             return firstDataNode;
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IOException("Checksum algorithm not available", ex);
         } finally {
-            dIn.close();
+            gzipInputStream.close();
         }
     }
 
@@ -546,12 +778,78 @@ public class XData {
      *
      * @param node
      * @param file
+     * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
+     * @param marshallers
+     * @throws IOException
+     */
+    public static void store(DataNode node, File file, boolean addChecksum, AbstractDataMarshaller<?>... marshallers) throws IOException {
+        store(node, file, addChecksum, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+
+    /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work. 
+     *
+     * @param node
+     * @param file
      * @param progressListener
      * @param marshallers
      * @throws IOException
      */
     public static void store(DataNode node, File file, ProgressListener progressListener, AbstractDataMarshaller<?>... marshallers) throws IOException {
-        store(node, new FileOutputStream(file), progressListener, marshallers);
+        store(node, new FileOutputStream(file), true, progressListener, marshallers);
+    }
+
+    /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param node
+     * @param file
+     * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
+     * @param progressListener
+     * @param marshallers
+     * @throws IOException
+     */
+    public static void store(DataNode node, File file, boolean addChecksum, ProgressListener progressListener,
+            AbstractDataMarshaller<?>... marshallers) throws IOException {
+        store(node, new FileOutputStream(file), addChecksum, progressListener, marshallers);
     }
 
 
@@ -583,7 +881,7 @@ public class XData {
      * @throws IOException
      */
     public static void store(DataNode node, OutputStream out, AbstractDataMarshaller<?>... marshallers) throws IOException {
-        store(node, out, DUMMY_PROGRESS_LISTENER, marshallers);
+        store(node, out, true, DUMMY_PROGRESS_LISTENER, marshallers);
     }
 
     /**
@@ -610,24 +908,75 @@ public class XData {
      *
      * @param node
      * @param out
+     * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
+     * @param marshallers
+     * @throws IOException
+     */
+    public static void store(DataNode node, OutputStream out, boolean addChecksum, AbstractDataMarshaller<?>... marshallers) throws IOException {
+        store(node, out, addChecksum, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+
+    /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p/>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     *
+     * @param node
+     * @param out
+     * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
      * @param progressListener
      * @param marshallers
      * @throws IOException
      */
-    public static void store(DataNode node, OutputStream out, ProgressListener progressListener,
+    public static void store(DataNode node, OutputStream out, boolean addChecksum, ProgressListener progressListener,
             AbstractDataMarshaller<?>... marshallers) throws IOException {
         final Map<String, AbstractDataMarshaller<?>> marshallerMap = generateMarshallerMap(true, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(true, DEFAULT_MARSHALLERS));
 
-        DataOutputStream dOut = new DataOutputStream(new GZIPOutputStream(out));
+        GZIPOutputStream gzipOutputStream = null;
         try {
+            gzipOutputStream = new GZIPOutputStream(out);
+            OutputStream outputStream = gzipOutputStream;
+            MessageDigestOutputStream messageDigestOutputStream = null;
+
+            if (addChecksum) {
+                messageDigestOutputStream = new MessageDigestOutputStream(outputStream, CHECKSUM_ALGORITHM);
+                outputStream = messageDigestOutputStream;
+            }
+            final DataOutputStream dOut = new DataOutputStream(outputStream);
+
             //write header
             dOut.write(XDATA_HEADER);
 
             //serialize the node
             serialize(marshallerMap, dOut, node, progressListener);
+
+            if (addChecksum) {
+                final byte[] digest = messageDigestOutputStream.getDigest();
+                dOut.writeBoolean(true);
+                dOut.write(digest);
+            }
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IOException("Checksum algorithm not available", ex);
         } finally {
-            dOut.close();
+            gzipOutputStream.close();
         }
     }
 
@@ -669,7 +1018,7 @@ public class XData {
             Map<SerializedObject, SerializedObject> serializedObjects,
             SerializedObject testSerializedObject) throws IOException {
         if (element instanceof List) {
-            stack.push(new ListFrame(element, (List<?>) element));
+            stack.push(new ListSerializationFrame(element, (List<?>) element));
             return true;
         } else
             if (element == null || isPrimitiveOrString(element)) {
@@ -681,11 +1030,11 @@ public class XData {
                     final SerializedObject serializedObject = serializedObjects.get(testSerializedObject);
                     serializeReference(serializedObject, dOut);
                 } else {
-                    DataNodeFrame dataNodeFrame;
+                    DataNodeSerializationFrame dataNodeFrame;
                     if (element instanceof DataNode) {
-                        dataNodeFrame = new DataNodeFrame(element, (DataNode) element);
+                        dataNodeFrame = new DataNodeSerializationFrame(element, (DataNode) element);
                     } else {
-                        dataNodeFrame = new DataNodeFrame(element, marshalObject(marshallerMap, element));
+                        dataNodeFrame = new DataNodeSerializationFrame(element, marshalObject(marshallerMap, element));
                     }
                     stack.push(dataNodeFrame);
                     return true;
@@ -711,7 +1060,7 @@ public class XData {
         final Map<SerializedObject, SerializedObject> serializedObjects = new HashMap<SerializedObject, SerializedObject>();
 
         final Deque<SerializationFrame> stack = new LinkedList<SerializationFrame>();
-        final DataNodeFrame primaryDataNodeFrame = new DataNodeFrame(null, primaryNode);
+        final DataNodeSerializationFrame primaryDataNodeFrame = new DataNodeSerializationFrame(null, primaryNode);
 
         progressListener.onTotalSteps(primaryDataNodeFrame.entries.size());
         stack.add(primaryDataNodeFrame);
@@ -742,8 +1091,8 @@ public class XData {
                 stack.pop();
 
                 //remember serialized deSerializedObject's addresses
-                if (frame instanceof DataNodeFrame) {
-                    DataNodeFrame dataNodeFrame = (DataNodeFrame) frame;
+                if (frame instanceof DataNodeSerializationFrame) {
+                    DataNodeSerializationFrame dataNodeFrame = (DataNodeSerializationFrame) frame;
                     SerializedObject newSerializedObject = new SerializedObject();
                     newSerializedObject.object = frame.object;
                     newSerializedObject.positionInStream = dataNodeFrame.positionInStream;
@@ -963,26 +1312,6 @@ public class XData {
 
     }
 
-
-    private static class ReferenceableMarshalledObject {
-        private final DataNode dataNode;
-        private final long positionInStream;
-
-        public ReferenceableMarshalledObject(DataNode dataNode, long positionInStream) {
-            this.dataNode = dataNode;
-            this.positionInStream = positionInStream;
-        }
-    }
-
-    private static class Reference {
-        private final long positionInStream;
-
-        public Reference(long positionInStream) {
-            this.positionInStream = positionInStream;
-        }
-
-    }
-
     // ##################################
     // ## Serialization Helper Classes ##
     // ##################################
@@ -1036,10 +1365,10 @@ public class XData {
                 SerializedObject testSerializedObject) throws IOException;
     }
 
-    private static class ListFrame extends SerializationFrame {
+    private static class ListSerializationFrame extends SerializationFrame {
         private final List<Object> entries = new LinkedList<Object>();
 
-        public ListFrame(Object object, List<?> list) {
+        public ListSerializationFrame(Object object, List<?> list) {
             super(object);
             this.entries.addAll(list);
         }
@@ -1068,12 +1397,12 @@ public class XData {
 
     }
 
-    private static class DataNodeFrame extends SerializationFrame {
+    private static class DataNodeSerializationFrame extends SerializationFrame {
         private final DataNode dataNode;
         private long positionInStream;
         private final Queue<Entry<String, Object>> entries = new LinkedList<Entry<String, Object>>();
 
-        public DataNodeFrame(Object object, DataNode dataNode) {
+        public DataNodeSerializationFrame(Object object, DataNode dataNode) {
             super(object);
             this.dataNode = dataNode;
             this.entries.addAll(dataNode.getAll());
@@ -1105,55 +1434,6 @@ public class XData {
                     serializedObjects, testSerializedObject);
         }
 
-    }
-
-    // #########################
-    // ## Specialized Streams ##
-    // #########################
-
-    private static class CountingDataInputStream extends DataInputStream {
-
-        private final CountingInputStream countingInputStream;
-
-        public CountingDataInputStream(InputStream in) {
-            super(new CountingInputStream(in));
-            this.countingInputStream = (CountingInputStream) this.in;
-        }
-
-        /**
-         * returns the current position of the stream
-         * @return
-         */
-        public long getPosition() {
-            return this.countingInputStream.getPosition();
-        }
-
-        @Override
-        public int read() throws IOException {
-            return super.read();
-        }
-
-    }
-
-    private static class CountingInputStream extends InputStream {
-
-        private final InputStream in;
-        private long position = 0;
-
-        public CountingInputStream(InputStream in) {
-            this.in = in;
-        }
-
-        public long getPosition() {
-            return position;
-        }
-
-        @Override
-        public int read() throws IOException {
-            int read = in.read();
-            position++;
-            return read;
-        }
     }
 
     // ##########################################
