@@ -25,6 +25,8 @@ for commercial ones.
 changelog
 =========
 
+* 1.6
+  * Added new `EnumMarshaller`.
 * 1.5
   * New way to use generic types in keys. This helps to get rid of a lot of ugly casting. See `DataKey.createKey(String name, GenericType<T> genType)` for more infos.
   * `GenericType<T>` can now also be used when specifying the type in a custom Marshaller. See the new `GenericDataMarshaller` class.

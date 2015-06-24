@@ -30,10 +30,11 @@ import java.lang.reflect.ParameterizedType;
  * </pre>
  *
  * @author Florian Frankenberger
+ * @param <T>
  */
 public class GenericType<T> extends Capture<T> {
 
-    private ParameterizedType genericType;
+    private final ParameterizedType genericType;
 
     public GenericType() {
         this.genericType = capture();
