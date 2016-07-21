@@ -55,6 +55,7 @@ public class XDataTest {
 
     private static final DataKey<DataNode> KEY_CAR_INFO = DataKey.create("car_info", DataNode.class);
     private static final DataKey<Car> KEY_CAR = DataKey.create("car", Car.class);
+    private static final DataKey<Helicopter> KEY_HELICOPTER = DataKey.create("helicopter", Helicopter.class);
     private static final DataKey<Car> KEY_CAR_A = DataKey.create("car a", Car.class);
     private static final DataKey<Car> KEY_CAR_B = DataKey.create("car b", Car.class);
     private static final DataKey<Car> KEY_CAR_C = DataKey.create("car c", Car.class);
@@ -67,6 +68,7 @@ public class XDataTest {
     private static final DataKey<String> KEY_STRING_DEFAULT = DataKey.create("stringdef", String.class, "fasel");
 
     private static final ListDataKey<String> KEY_STRING_LIST_NOT_NULL = ListDataKey.create("stringlist", String.class, false);
+
     /**
      * A simple store and retrieve test (no marshalling)
      * @throws java.io.IOException
@@ -226,6 +228,24 @@ public class XDataTest {
         assertTrue(restoredSubNode.containsKey(KEY_CAR));
         assertEquals("some car info", restoredNode.getObject(KEY_STRING));
         assertEquals(car, restoredSubNode.getObject(KEY_CAR));
+    }
+
+    @Test
+    public void customMarshallerTest2() throws IOException {
+        File tmpFile = File.createTempFile("xdata_test3_2", ".xdata");
+        tmpFile.deleteOnExit();
+
+        Helicopter heli = new Helicopter(5.5f);
+        heli.setWeight(50f);
+        heli.name = "Hello World Helicopter";
+
+        DataNode node = new DataNode();
+        node.setObject(KEY_HELICOPTER, heli);
+        XData.store(node, tmpFile, new AnnotationBasedMarshaller<Helicopter>(Helicopter.class));
+
+        DataNode restoredNode = XData.load(tmpFile, new AnnotationBasedMarshaller<Helicopter>(Helicopter.class));
+        assertTrue(restoredNode.containsKey(KEY_HELICOPTER));
+        assertEquals(heli, restoredNode.getObject(KEY_HELICOPTER));
     }
 
     @Test
