@@ -135,6 +135,12 @@ public class XDataTest {
             throw new IllegalStateException("No IOException expected here!", e);
         }
 
+        try {
+            assertTrue(XData.validate(tmpFile));
+        } catch (IOException e) {
+            throw new IllegalStateException("No IOException expected here!", e);
+        }
+
         //corrupt file
         File unpackedFile = unpack(tmpFile);
         RandomAccessFile rFile = new RandomAccessFile(unpackedFile, "rw");
@@ -142,6 +148,8 @@ public class XDataTest {
         rFile.write(0x00);
         rFile.close();
         File packedFile = pack(unpackedFile);
+
+        assertFalse(XData.validate(packedFile));
 
         XData.load(packedFile, XData.ChecksumValidation.VALIDATE_OR_THROW_EXCEPTION);
     }
@@ -241,9 +249,9 @@ public class XDataTest {
 
         DataNode node = new DataNode();
         node.setObject(KEY_HELICOPTER, heli);
-        XData.store(node, tmpFile, new AnnotationBasedMarshaller<Helicopter>(Helicopter.class));
+        XData.store(node, tmpFile, new AnnotationBasedMarshaller<>(Helicopter.class));
 
-        DataNode restoredNode = XData.load(tmpFile, new AnnotationBasedMarshaller<Helicopter>(Helicopter.class));
+        DataNode restoredNode = XData.load(tmpFile, new AnnotationBasedMarshaller<>(Helicopter.class));
         assertTrue(restoredNode.containsKey(KEY_HELICOPTER));
         assertEquals(heli, restoredNode.getObject(KEY_HELICOPTER));
     }
@@ -254,7 +262,7 @@ public class XDataTest {
         tmpFile.deleteOnExit();
 
         Random random = new Random();
-        List<Car> cars = new ArrayList<Car>();
+        List<Car> cars = new ArrayList<>();
         for (int i = 0; i < 100; ++i) {
             final Car car = new Car(random.nextInt(5), random.nextFloat() * 400f, new Date());
             cars.add(random.nextBoolean() ? car : null);
@@ -305,15 +313,15 @@ public class XDataTest {
         tmpFile.deleteOnExit();
 
         Car car = new Car(4, 180.5f, new Date());
-        List<Date> checkDates = new ArrayList<Date>();
+        List<Date> checkDates = new ArrayList<>();
         checkDates.add(new Date());
         checkDates.add(new Date(578987L));
         car.setCheckDates(checkDates);
 
         DataNode node = new DataNode();
 
-        List<List<Car>> carMetaList = new ArrayList<List<Car>>();
-        List<Car> carList = new ArrayList<Car>();
+        List<List<Car>> carMetaList = new ArrayList<>();
+        List<Car> carList = new ArrayList<>();
         carList.add(car);
         carMetaList.add(carList);
 
@@ -415,4 +423,5 @@ public class XDataTest {
         assertEquals(car, result.getObject(KEY_CAR_B));
         assertEquals(car, result.getObject(KEY_CAR_C));
     }
+
 }

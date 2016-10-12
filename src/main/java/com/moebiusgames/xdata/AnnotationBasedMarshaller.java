@@ -48,11 +48,11 @@ public class AnnotationBasedMarshaller<T> implements DataMarshaller<T> {
     private final Class<T> annotatedClass;
     private final MarshallableType annotation;
 
-    private final Map<Field, Key<Object>> dataKeys = new HashMap<Field, Key<Object>>();
-    private final Set<Field> getterSet = new HashSet<Field>();
-    private final Set<Field> setterSet = new HashSet<Field>();
+    private final Map<Field, Key<Object>> dataKeys = new HashMap<>();
+    private final Set<Field> getterSet = new HashSet<>();
+    private final Set<Field> setterSet = new HashSet<>();
 
-    private final Map<String, Integer> fieldNameToConstructorParameterIndex = new HashMap<String, Integer>();
+    private final Map<String, Integer> fieldNameToConstructorParameterIndex = new HashMap<>();
     private Constructor<T> constructorToUse;
 
     public AnnotationBasedMarshaller(Class<T> annotatedClass) {
@@ -73,7 +73,7 @@ public class AnnotationBasedMarshaller<T> implements DataMarshaller<T> {
     }
 
     private void prepareFields() {
-        final Map<String, Field> finalFields = new HashMap<String, Field>();
+        final Map<String, Field> finalFields = new HashMap<>();
 
         Class<? super T> clazz = this.annotatedClass;
         while (clazz != null && clazz != Object.class) {
@@ -122,7 +122,7 @@ public class AnnotationBasedMarshaller<T> implements DataMarshaller<T> {
         //now determine the correct constructor
         constructorToUse = null;
         for (Constructor<?> constructor : this.annotatedClass.getDeclaredConstructors()) {
-            Set<String> finalFieldsNames = new HashSet<String>(finalFields.keySet());
+            Set<String> finalFieldsNames = new HashSet<>(finalFields.keySet());
             if (constructor.getParameterCount() == finalFields.size()) {
                 for (int idx = 0; idx < constructor.getParameterCount(); ++idx) {
                     final Parameter parameter = constructor.getParameters()[idx];
@@ -208,7 +208,7 @@ public class AnnotationBasedMarshaller<T> implements DataMarshaller<T> {
     @Override
     public T unMarshal(DataNode node) {
         try {
-            final Map<Field, Object> readValues = new HashMap<Field, Object>();
+            final Map<Field, Object> readValues = new HashMap<>();
             final Object[] constructorParameters = new Object[constructorToUse.getParameterCount()];
 
             for (Entry<Field, Key<Object>> entry : dataKeys.entrySet()) {

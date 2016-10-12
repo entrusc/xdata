@@ -72,7 +72,7 @@ public class CarMarshaller implements DataMarshaller<Car> {
 
     @Override
     public List<DataMarshaller<?>> getRequiredMarshallers() {
-        List<DataMarshaller<?>> list = new ArrayList<DataMarshaller<?>>();
+        List<DataMarshaller<?>> list = new ArrayList<>();
         list.add(new DateMarshaller());
         return list;
     }

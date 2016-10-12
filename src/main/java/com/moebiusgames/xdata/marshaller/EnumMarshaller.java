@@ -40,7 +40,7 @@ public class EnumMarshaller<T extends Enum<T>> implements DataMarshaller<T> {
 
     private final String typeName;
 
-    private final Map<String, T> mappings = new HashMap<String, T>();
+    private final Map<String, T> mappings = new HashMap<>();
     private final Class<T> clazz;
     private final T[] universe;
     private final T fallback;

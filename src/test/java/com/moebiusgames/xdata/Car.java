@@ -34,7 +34,7 @@ public class Car {
     private final float horsePower;
     
     private final Date buildDate;
-    private List<Date> checkDates = new ArrayList<Date>();
+    private List<Date> checkDates = new ArrayList<>();
 
     public Car(int wheels, float horsePower, Date buildDate) {
         this.wheels = wheels;

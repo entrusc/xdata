@@ -33,7 +33,7 @@ import java.util.Set;
  */
 public class DataNode {
 
-    private final Map<String, Object> data = new LinkedHashMap<String, Object>();
+    private final Map<String, Object> data = new LinkedHashMap<>();
 
     /**
      * clears the data node
@@ -90,7 +90,7 @@ public class DataNode {
         final Object object = data.get(key.getName());
 
         if (object == null && !key.allowNull()) {
-            return new ArrayList<T>();
+            return new ArrayList<>();
         }
 
         return (List<T>) object;
@@ -172,11 +172,11 @@ public class DataNode {
      * @return
      */
     public List<String> getRawKeys() {
-        return new ArrayList<String>(data.keySet());
+        return new ArrayList<>(data.keySet());
     }
 
     public List<Object> getRawValues() {
-        return new ArrayList<Object>(data.values());
+        return new ArrayList<>(data.values());
     }
 
     /**
@@ -204,7 +204,7 @@ public class DataNode {
     private Object copy(Object object) {
         if (object instanceof List) {
             final List<Object> list = (List<Object>) object;
-            final List<Object> listCopy = new ArrayList<Object>();
+            final List<Object> listCopy = new ArrayList<>();
             for (Object aObject : list) {
                 listCopy.add(copy(aObject));
             }
@@ -312,7 +312,7 @@ public class DataNode {
     }
 
     private static <T> List<T> deepListCopy(List<T> list) {
-        final List<T> newList = new ArrayList<T>();
+        final List<T> newList = new ArrayList<>();
         for (T element : list) {
             T newElement = element;
             if (element instanceof List) {

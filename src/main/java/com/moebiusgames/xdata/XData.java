@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -88,10 +89,10 @@ public class XData {
 
     private static final byte[] XDATA_HEADER = new byte[] {'x', 'd', 'a', 't', 'a'};
     private static final DataKey<String> META_CLASS_NAME = DataKey.create("_meta_classname", String.class);
-    private static final Map<Class<?>, Serializer<?>> PRIMITIVE_SERIALIZERS_BY_CLASS = new HashMap<Class<?>, Serializer<?>>();
-    private static final Map<Byte, Serializer<?>> PRIMITIVE_SERIALIZERS_BY_ID = new HashMap<Byte, Serializer<?>>();
+    private static final Map<Class<?>, Serializer<?>> PRIMITIVE_SERIALIZERS_BY_CLASS = new HashMap<>();
+    private static final Map<Byte, Serializer<?>> PRIMITIVE_SERIALIZERS_BY_ID = new HashMap<>();
 
-    private static final List<DataMarshaller<?>> DEFAULT_MARSHALLERS = new ArrayList<DataMarshaller<?>>();
+    private static final List<DataMarshaller<?>> DEFAULT_MARSHALLERS = new ArrayList<>();
 
     private static final int VAL_NULL = 0;
     private static final int VAL_ELEMENT = 1;
@@ -582,12 +583,7 @@ public class XData {
                 inputStream = messageDigestInputStream;
             }
             CountingDataInputStream dIn = new CountingDataInputStream(inputStream);
-            //check the header
-            for (int i = 0; i < XDATA_HEADER.length; ++i) {
-                if (dIn.readByte() != XDATA_HEADER[i]) {
-                    throw new IOException("not a xdata file");
-                }
-            }
+            checkHeader(dIn);
 
             final DataNode firstDataNode = deSerialize(dIn, marshallerMap,
                     ignoreMissingMarshallers, progressListener);
@@ -627,13 +623,75 @@ public class XData {
         }
     }
 
+    /**
+     * explicitly validates the given xdata file against the embedded checksum,
+     * if there is no checksum or the checksum does not correspond to the data,
+     * then false is returned. Otherwise true is returned.
+     *
+     * @param in
+     * @return
+     */
+    public static boolean validate(File file) throws IOException {
+        return validate(new FileInputStream(file));
+    }
+
+    /**
+     * explicitly validates the given xdata stream against the embedded checksum,
+     * if there is no checksum or the checksum does not correspond to the data,
+     * then false is returned. Otherwise true is returned.
+     *
+     * @param in
+     * @return
+     */
+    public static boolean validate(InputStream in) throws IOException {
+        final Map<String, AbstractDataMarshaller<?>> marshallerMap = generateMarshallerMap(false, Collections.EMPTY_LIST);
+        marshallerMap.putAll(generateMarshallerMap(false, DEFAULT_MARSHALLERS));
+
+        final GZIPInputStream gzipInputStream = new GZIPInputStream(in);
+        try {
+            MessageDigestInputStream messageDigestInputStream = new MessageDigestInputStream(gzipInputStream, CHECKSUM_ALGORITHM);
+            CountingDataInputStream dIn = new CountingDataInputStream(messageDigestInputStream);
+
+            checkHeader(dIn);
+            deSerialize(dIn, marshallerMap, true, DUMMY_PROGRESS_LISTENER);
+
+            byte[] checksumCalcualted = messageDigestInputStream.getDigest();
+            final int checksumAvailable = dIn.read();
+
+            byte[] checksumValue = new byte[CHECKSUM_ALGORITHM_LENGTH];
+            if (checksumAvailable == -1) {
+                return false; //no stored checksum
+            }
+
+            int readBytes = dIn.read(checksumValue);
+            if (readBytes == CHECKSUM_ALGORITHM_LENGTH) {
+                return Arrays.equals(checksumValue, checksumCalcualted);
+            } else {
+                return false; //checksum length too short or too long
+            }
+        } catch (NoSuchAlgorithmException ex) {
+            throw new IOException("Checksum algorithm not available", ex);
+        } finally {
+            gzipInputStream.close();
+        }
+    }
+
+    private static void checkHeader(CountingDataInputStream dIn) throws IOException {
+        //check the header
+        for (int i = 0; i < XDATA_HEADER.length; ++i) {
+            if (dIn.readByte() != XDATA_HEADER[i]) {
+                throw new IOException("not a xdata file");
+            }
+        }
+    }
+
     private static DataNode deSerialize(CountingDataInputStream dIn,
             Map<String, AbstractDataMarshaller<?>> marshallerMap,
             boolean ignoreMissingMarshallers,
             ProgressListener progressListener) throws IOException {
 
-        final Deque<DeSerializerFrame> stack = new LinkedList<DeSerializerFrame>();
-        final Map<Long, Object> referenceableObjectMap = new HashMap<Long, Object>();
+        final Deque<DeSerializerFrame> stack = new LinkedList<>();
+        final Map<Long, Object> referenceableObjectMap = new HashMap<>();
 
         //first object needs to be a DataNode
         final Object firstObject = deSerializeElement(stack, dIn, referenceableObjectMap);
@@ -724,9 +782,9 @@ public class XData {
     }
 
     /**
-     * stores a datanode in a xdata file using the given marshallers. For all classes other
-     * than these a special marshaller is required to map the class' data to a data node
-     * deSerializedObject:
+     * stores a datanode in a xdata file using the given marshallers and adds a checksum to the
+     * end of the file. For all classes other than these a special marshaller is required to map
+     * the class' data to a data node deSerializedObject:
      * <ul>
      * <li>Boolean</li>
      * <li>Long</li>
@@ -787,9 +845,9 @@ public class XData {
     }
 
     /**
-     * stores a datanode in a xdata file using the given marshallers. For all classes other
-     * than these a special marshaller is required to map the class' data to a data node
-     * deSerializedObject:
+     * stores a datanode in a xdata file using the given marshallers and adds a checksum to the
+     * end of the file. For all classes other than these a special marshaller is required to map
+     * the class' data to a data node deSerializedObject:
      * <ul>
      * <li>Boolean</li>
      * <li>Long</li>
@@ -806,7 +864,7 @@ public class XData {
      * <p/>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
-     * to work. 
+     * to work.
      *
      * @param node
      * @param file
@@ -854,9 +912,9 @@ public class XData {
 
 
     /**
-     * stores a datanode in a xdata file using the given marshallers. For all classes other
-     * than these a special marshaller is required to map the class' data to a data node
-     * deSerializedObject:
+     * stores a datanode in a xdata file using the given marshallers and adds a checksum to the
+     * end of the file. For all classes other than these a special marshaller is required to map
+     * the class' data to a data node deSerializedObject:
      * <ul>
      * <li>Boolean</li>
      * <li>Long</li>
@@ -1057,9 +1115,9 @@ public class XData {
 
         //a map containing all serialized objects. This is used
         //to make sure that we store each deSerializedObject only once.
-        final Map<SerializedObject, SerializedObject> serializedObjects = new HashMap<SerializedObject, SerializedObject>();
+        final Map<SerializedObject, SerializedObject> serializedObjects = new HashMap<>();
 
-        final Deque<SerializationFrame> stack = new LinkedList<SerializationFrame>();
+        final Deque<SerializationFrame> stack = new LinkedList<>();
         final DataNodeSerializationFrame primaryDataNodeFrame = new DataNodeSerializationFrame(null, primaryNode);
 
         progressListener.onTotalSteps(primaryDataNodeFrame.entries.size());
@@ -1143,7 +1201,7 @@ public class XData {
 
     private static Map<String, AbstractDataMarshaller<?>> generateMarshallerMap(boolean fullyQualifiedClassName,
             List<? extends AbstractDataMarshaller<?>> marshallers) {
-        final Map<String, AbstractDataMarshaller<?>> map = new HashMap<String, AbstractDataMarshaller<?>>();
+        final Map<String, AbstractDataMarshaller<?>> map = new HashMap<>();
         for (AbstractDataMarshaller<?> marshaller : marshallers) {
             Class<?> marshallerDataClass;
             if (marshaller instanceof GenericDataMarshaller) {
@@ -1264,7 +1322,7 @@ public class XData {
 
     private static class ListDeSerializerFrame extends DeSerializerFrame {
 
-        private final List<Object> list = new ArrayList<Object>();
+        private final List<Object> list = new ArrayList<>();
 
         private final int size;
         private int position = 0;
@@ -1366,7 +1424,7 @@ public class XData {
     }
 
     private static class ListSerializationFrame extends SerializationFrame {
-        private final List<Object> entries = new LinkedList<Object>();
+        private final List<Object> entries = new LinkedList<>();
 
         public ListSerializationFrame(Object object, List<?> list) {
             super(object);
@@ -1400,7 +1458,7 @@ public class XData {
     private static class DataNodeSerializationFrame extends SerializationFrame {
         private final DataNode dataNode;
         private long positionInStream;
-        private final Queue<Entry<String, Object>> entries = new LinkedList<Entry<String, Object>>();
+        private final Queue<Entry<String, Object>> entries = new LinkedList<>();
 
         public DataNodeSerializationFrame(Object object, DataNode dataNode) {
             super(object);
@@ -1688,7 +1746,7 @@ public class XData {
             }
         };
 
-        private final Deque<DataNode> dataNodes = new LinkedList<DataNode>();
+        private final Deque<DataNode> dataNodes = new LinkedList<>();
 
         public synchronized DataNode getNew() {
             if (dataNodes.isEmpty()) {
