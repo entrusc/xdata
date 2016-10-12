@@ -33,33 +33,35 @@ import java.util.Map.Entry;
 import java.util.function.Supplier;
 
 /**
- *
+ * A generic map marshaller that is able to marshall a certain type of maps
+ * (e.g. a HashMaps)
+ * <p>
+ * Note that enforcing of parameter types is not possible, so you need to make
+ * sure that you check the deserialized maps yourself if they contain the correct
+ * types (see also: type erasure).
+ * </p>
  * @author Florian Frankenberger
  */
-public class MapMarshaller<K, V> implements DataMarshaller<Map<K, V>>{
+public class MapMarshaller implements DataMarshaller<Map<?, ?>>{
 
     private final List<AbstractDataMarshaller<?>> marshallers = new ArrayList<>();
-    private final ListDataKey<Tupel<K, V>> DATA_KEY = ListDataKey.create("data", new GenericType<Tupel<K, V>>() {});
+    private final ListDataKey<Tupel<Object, Object>> DATA_KEY = ListDataKey.create("data", new GenericType<Tupel<Object, Object>>() {});
 
-    private final Supplier<Map<K, V>> supplier;
+    private final Supplier<Map<?, ?>> supplier;
     private final Class<? extends Map> mapClass;
-    private final Class<K> keyClass;
-    private final Class<V> valueClass;
 
-    public MapMarshaller(Supplier<Map<K, V>> supplier, Class<? extends Map> mapClass,
-            Class<K> keyClass, Class<V> valueClass, AbstractDataMarshaller<?>... marshallers) {
+    public MapMarshaller(Supplier<Map<?, ?>> supplier, Class<? extends Map> mapClass,
+            AbstractDataMarshaller<?>... marshallers) {
         this.supplier = supplier;
         this.mapClass = mapClass;
-        this.keyClass = keyClass;
-        this.valueClass = valueClass;
 
         this.marshallers.add(Tupel.MARSHALLER);
         this.marshallers.addAll(Arrays.asList(marshallers));
     }
 
     @Override
-    public Class<Map<K, V>> getDataClass() {
-        return (Class<Map<K, V>>) mapClass;
+    public Class<Map<?, ?>> getDataClass() {
+        return (Class<Map<?, ?>>) mapClass;
     }
 
     @Override
@@ -73,10 +75,10 @@ public class MapMarshaller<K, V> implements DataMarshaller<Map<K, V>>{
     }
 
     @Override
-    public DataNode marshal(Map<K, V> object) {
+    public DataNode marshal(Map<?, ?> object) {
         final DataNode dataNode = new DataNode();
-        final List<Tupel<K, V>> tupels = new ArrayList<>();
-        for (Entry<K, V> entry : object.entrySet()) {
+        final List<Tupel<Object, Object>> tupels = new ArrayList<>();
+        for (Entry<?, ?> entry : object.entrySet()) {
             tupels.add(new Tupel<>(entry.getKey(), entry.getValue()));
         }
         dataNode.setObjectList(DATA_KEY, tupels);
@@ -84,28 +86,14 @@ public class MapMarshaller<K, V> implements DataMarshaller<Map<K, V>>{
     }
 
     @Override
-    public Map<K, V> unMarshal(DataNode node) {
-        Map<K, V> map = supplier.get();
-        List<Tupel<K, V>> tupels = node.getMandatoryObjectList(DATA_KEY);
+    public Map<?, ?> unMarshal(DataNode node) {
+        Map<Object, Object> map = (Map<Object, Object>) supplier.get();
+        List<Tupel<Object, Object>> tupels = node.getMandatoryObjectList(DATA_KEY);
 
-        K key;
-        V value;
-        for (Tupel<K, V> tupel : tupels) {
-            key = tupel.getT1();
-            value = tupel.getT2();
-            checkValues(key, value);
-            map.put(key, value);
+        for (Tupel<Object, Object> tupel : tupels) {
+            map.put(tupel.getT1(), tupel.getT2());
         }
         return map;
-    }
-
-    private void checkValues(K key, V value) {
-        if (!keyClass.isAssignableFrom(key.getClass())) {
-            throw new IllegalStateException("a deserialized key of the map is of type " + key.getClass() + " which is not a subtype of " + keyClass);
-        }
-        if (!valueClass.isAssignableFrom(value.getClass())) {
-            throw new IllegalStateException("a deserialized value of the map is of type " + value.getClass() + " which is not a subtype of " + valueClass);
-        }
     }
 
     private static class Tupel<T1, T2> {

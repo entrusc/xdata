@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
@@ -37,7 +36,6 @@ import static org.junit.Assert.assertEquals;
 public class MapMarshallerTest {
 
     private static final DataKey<HashMap<Integer, String>> KEY_MAP = DataKey.create("map", new GenericType<HashMap<Integer, String>>() {});
-    private static final DataKey<HashMap<String, String>> KEY_MAP2 = DataKey.create("map", new GenericType<HashMap<String, String>>() {});
 
     public MapMarshallerTest() {
     }
@@ -47,7 +45,7 @@ public class MapMarshallerTest {
         File tmpFile = File.createTempFile("xdata_hashmap_test", ".xdata");
         tmpFile.deleteOnExit();
 
-        MapMarshaller<Integer, String> serializer = new MapMarshaller<>(HashMap::new, HashMap.class, Integer.class, String.class);
+        MapMarshaller serializer = new MapMarshaller(HashMap::new, HashMap.class);
 
         HashMap<Integer, String> map = new HashMap<>();
         map.put(1, "Hello World?");
@@ -68,8 +66,8 @@ public class MapMarshallerTest {
         File tmpFile = File.createTempFile("xdata_hashmap_test", ".xdata");
         tmpFile.deleteOnExit();
 
-        MapMarshaller<Integer, String> serializer = new MapMarshaller<>(HashMap::new, HashMap.class, Integer.class, String.class);
-        MapMarshaller<Integer, String> serializer2 = new MapMarshaller<>(LinkedHashMap::new, LinkedHashMap.class, Integer.class, String.class);
+        MapMarshaller serializer = new MapMarshaller(HashMap::new, HashMap.class);
+        MapMarshaller serializer2 = new MapMarshaller(LinkedHashMap::new, LinkedHashMap.class);
 
         HashMap<Integer, String> map = new HashMap<>();
         map.put(1, "Hello World?");
@@ -86,24 +84,5 @@ public class MapMarshallerTest {
         assertEquals(map, restoredMap);
     }
 
-    @Test (expected = IllegalStateException.class)
-    public void marshallingTestWithIncompatibleTypes() throws IOException {
-        File tmpFile = File.createTempFile("xdata_hashmap_test", ".xdata");
-        tmpFile.deleteOnExit();
-
-        MapMarshaller<Integer, String> serializer = new MapMarshaller<>(HashMap::new, HashMap.class, Integer.class, String.class);
-        MapMarshaller<String, String> serializer2 = new MapMarshaller<>(HashMap::new, HashMap.class, String.class, String.class);
-
-        HashMap<Integer, String> map = new HashMap<>();
-        map.put(1, "Hello World?");
-        map.put(2, "Second Entry");
-
-        DataNode dataNode = new DataNode();
-        dataNode.setObject(KEY_MAP, map);
-        XData.store(dataNode, tmpFile, serializer);
-
-        DataNode restoredNode = XData.load(tmpFile, serializer2);
-        HashMap<Integer, String> restoredMap = restoredNode.getMandatoryObject(KEY_MAP);
-    }
 
 }
