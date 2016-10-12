@@ -24,8 +24,8 @@ import java.util.List;
  * This is the basic class for all marshallers. DON'T IMPLEMENT
  * THIS MARSHALLER DIRECTLY. USE ONE OF THE SUBINTERFACES:
  * <pre>
- *      * DataMarshaller<T>
- *      * GenericDataMarshaller<T>
+ *      * DataMarshaller&lt;T&gt;
+ *      * GenericDataMarshaller&lt;T&gt;
  * </pre>
  * @author Florian Frankenberger
  */
