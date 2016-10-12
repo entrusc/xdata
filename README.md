@@ -14,12 +14,13 @@ xdata format highlights:
 * support for lists of any type
 * size of storable objects is only limited by memory
 * compression using standard gzip
+* optional validation of stored files using embedded checksum
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.moebiusgames/xdata/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.moebiusgames/xdata)
 
 license
 =======
-xdata is licensed under LGPL 2.1 and can therefore be used in any project, even
+xdata is licensed under LGPL 2.1 and can therefore be used for any project, even
 for commercial ones.
 
 changelog

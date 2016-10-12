@@ -1,22 +1,3 @@
-package com.moebiusgames.xdata;
-
-import com.moebiusgames.xdata.annotation.MarshallableField;
-import com.moebiusgames.xdata.annotation.MarshallableFinalParameter;
-import com.moebiusgames.xdata.annotation.MarshallableType;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 /*
  * Copyright (C) 2016 Florian Frankenberger.
  *
@@ -35,6 +16,24 @@ import java.util.Set;
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301  USA
  */
+package com.moebiusgames.xdata;
+
+import com.moebiusgames.xdata.annotation.MarshallableField;
+import com.moebiusgames.xdata.annotation.MarshallableFinalParameter;
+import com.moebiusgames.xdata.annotation.MarshallableType;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * A generic marshaller that can be used instead of a special marshaller

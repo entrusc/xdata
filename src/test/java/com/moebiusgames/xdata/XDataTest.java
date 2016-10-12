@@ -112,7 +112,6 @@ public class XDataTest {
     @Test(expected = IOException.class)
     public void checksumTest() throws IOException {
         File tmpFile = File.createTempFile("xdata_test_checksum", ".xdata");
-        System.out.println(tmpFile);
         tmpFile.deleteOnExit();
 
         DataNode dataNode = new DataNode();
@@ -156,7 +155,6 @@ public class XDataTest {
 
     private File unpack(File file) throws IOException {
         File tmpFile = File.createTempFile("xdata_test_unpacked", ".xdata");
-//        System.out.println("unpacked: " + tmpFile);
         tmpFile.deleteOnExit();
 
         GZIPInputStream in = new GZIPInputStream(new FileInputStream(file));
@@ -177,7 +175,6 @@ public class XDataTest {
 
     private File pack(File file) throws IOException {
         File tmpFile = File.createTempFile("xdata_test_packed", ".xdata");
-//        System.out.println("packed: " + tmpFile);
         tmpFile.deleteOnExit();
 
         FileInputStream in = new FileInputStream(file);
