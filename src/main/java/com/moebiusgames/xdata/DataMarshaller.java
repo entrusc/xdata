@@ -19,7 +19,7 @@
 package com.moebiusgames.xdata;
 
 /**
- * Marshals an object of type <T> into a DataNode and
+ * Marshals an object of type T into a DataNode and
  * back. This way it is always defined how to map fields
  * to fields of a type - therefore guaranteeing a maximum
  * of data portability.

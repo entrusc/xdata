@@ -23,7 +23,6 @@ import com.moebiusgames.xdata.type.GenericType;
 /**
  * A list data key to use with DataNode. You should declare your data keys
  * like this:
- * <p/>
  * <pre>
  *      public static final ListDataKey&lt;Boolean&gt; MY_KEY = ListDataKey.create("mykey", Boolean.class);
  *      public static final ListDataKey&lt;List&lt;String&gt;&gt; KEY_STRING_LIST = ListDataKey.create("strings", new GenericType&lt;List&lt;String&gt;&gt;() {});

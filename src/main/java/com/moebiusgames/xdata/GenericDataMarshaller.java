@@ -24,8 +24,9 @@ import com.moebiusgames.xdata.type.GenericType;
  * Same as a normal DataMarshaller only that it requires you
  * to return a GenericType&lt;T&gt; instead of a Class&lt;T&gt;, which should
  * save a lot of "casting" trouble when dealing with Generics.
- * <p/>
+ * <p>
  * Example:
+ * </p>
  * <pre>
  * public MyMarshaller&lt;List&lt;Car&gt;&gt; implements GenericDataMarshaller {
  *

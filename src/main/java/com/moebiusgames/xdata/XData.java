@@ -47,8 +47,9 @@ import java.util.zip.GZIPOutputStream;
 
 /**
  * Main class for storing and loading xdata files
- * <p/>
+ * <p>
  * Sample:
+ * </p>
  * <pre>
  *  final static DataKey&lt;String&gt; MY_KEY = DataKey.create("mykey", String.class);
   //...
@@ -158,11 +159,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param file
      * @param marshallers
      * @return
@@ -189,11 +190,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param file
      * @param checksumValidation
      * @param marshallers
@@ -221,11 +222,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param file
      * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
      *                                 when a marshaller is missing.
@@ -254,11 +255,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param file
      * @param progressListener
      * @param marshallers
@@ -286,11 +287,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param file
      * @param checksumValidation
      * @param progressListener
@@ -320,11 +321,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param file
      * @param progressListener
      * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
@@ -355,11 +356,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param file
      * @param checksumValidation
      * @param progressListener
@@ -391,11 +392,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param in
      * @param marshallers
      * @return
@@ -422,11 +423,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param in
      * @param checksumValidation
      * @param marshallers
@@ -455,11 +456,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param in
      * @param ignoreMissingMarshallers if this is set true then no IOException is thrown
      *                                 when a marshaller is missing.
@@ -488,11 +489,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param in
      * @param progressListener
      * @param marshallers
@@ -520,11 +521,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param in
      * @param checksumValidation
      * @param progressListener
@@ -554,11 +555,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param in
      * @param checksumValidation
      * @param progressListener
@@ -628,7 +629,7 @@ public class XData {
      * if there is no checksum or the checksum does not correspond to the data,
      * then false is returned. Otherwise true is returned.
      *
-     * @param in
+     * @param file
      * @return
      */
     public static boolean validate(File file) throws IOException {
@@ -798,11 +799,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param node
      * @param file
      * @param marshallers
@@ -829,11 +830,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param node
      * @param file
      * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
@@ -861,11 +862,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param node
      * @param file
      * @param progressListener
@@ -893,11 +894,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param node
      * @param file
      * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
@@ -928,11 +929,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param node
      * @param out
      * @param marshallers
@@ -959,11 +960,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param node
      * @param out
      * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
@@ -991,11 +992,11 @@ public class XData {
      * <li>DataNode</li>
      * <li>List&lt;?&gt;</li>
      * </ul>
-     * <p/>
+     * <p>
      * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
      * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
      * to work.
-     *
+     * </p>
      * @param node
      * @param out
      * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream

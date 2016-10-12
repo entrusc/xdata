@@ -35,13 +35,13 @@ public interface AbstractDataMarshaller<T> {
      * returns the (most possible unique name) of the class that this marshaller
      * is capable of marshalling. This string is written to the xdata file and used
      * for restoring und unmarshalling.
-     * <p/>
+     * <p>
      * For standard java classes like java.util.Date this
      * should be the fully qualified classname. For other projects that should stay
      * compatible you should better find a better unique name like "xcylin.worldsetting"
      * that is not directly dependent to the package structure that won't survive
      * the next refactoring.
-     *
+     * </p>
      * @return
      */
     String getDataClassName();
