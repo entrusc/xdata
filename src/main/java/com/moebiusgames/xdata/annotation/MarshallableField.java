@@ -29,13 +29,13 @@ import java.lang.annotation.Target;
  * and getter with the name schema setXyz() and getXyz() (assuming the field name
  * is xyz) when they are declared. When they are not declared, then the field
  * will be read/set directly. The default value of the field is the constructor
- * set value. All other options are similar to DataKey<T> and ListDataKey<T>.
- *
+ * set value. All other options are similar to DataKey&lt;T&gt; and ListDataKey&lt;T&gt;.
+ * <p>
  * If the field is set final then it is expected that there is a constructor
  * with all final variables as parameters. If there are multiple constructors
  * then the algorithm will choose the one that fits all annotated final field
  * names.
- *
+ * </p>
  * @author Florian Frankenberger
  */
 @Retention(RetentionPolicy.RUNTIME)

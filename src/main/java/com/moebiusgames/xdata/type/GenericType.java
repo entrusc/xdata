@@ -23,8 +23,9 @@ import java.lang.reflect.ParameterizedType;
 /**
  * Helper class to prevent ugly casting scenarios when
  * defining keys in XData.
- * <p />
+ * <p>
  * Example:
+ * </p>
  * <pre>
  *     public static final ListDataKey&lt;List&lt;String&gt;&gt; KEY_STRING_LIST = ListDataKey.create("strings", new GenericType&lt;List&lt;String&gt;&gt;() {});
  * </pre>
