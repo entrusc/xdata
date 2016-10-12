@@ -27,6 +27,7 @@ changelog
 
 * 1.6
   * Added new `EnumMarshaller`.
+  * Added new `MapMarshaller` that supports all types of maps.
   * Added new possibility to create a Marshaller by adding a few annotations to a class and using the new `AnnotationBasedMarshaller`.
 * 1.5
   * New way to use generic types in keys. This helps to get rid of a lot of ugly casting. See `DataKey.createKey(String name, GenericType<T> genType)` for more infos.
