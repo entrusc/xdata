@@ -66,7 +66,7 @@ public class MapMarshaller implements DataMarshaller<Map<?, ?>>{
 
     @Override
     public String getDataClassName() {
-        return "hashmap";
+        return "map";
     }
 
     @Override
