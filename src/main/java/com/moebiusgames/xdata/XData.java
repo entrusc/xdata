@@ -1323,7 +1323,7 @@ public class XData {
 
     private static class ListDeSerializerFrame extends DeSerializerFrame {
 
-        private final List<Object> list = new ArrayList<>();
+        private final List<Object> list;
 
         private final int size;
         private int position = 0;
@@ -1332,6 +1332,7 @@ public class XData {
 
         public ListDeSerializerFrame(int size) {
             this.size = size;
+            list = new ArrayList<>(size);
         }
 
         @Override
@@ -1434,8 +1435,8 @@ public class XData {
 
         @Override
         public void doWriteHeader(DataOutputStream dOut) throws IOException {
-                dOut.writeByte(VAL_LIST);
-                dOut.writeInt(this.entries.size());
+            dOut.writeByte(VAL_LIST);
+            dOut.writeInt(this.entries.size());
         }
 
         @Override
