@@ -210,6 +210,34 @@ public class XDataTest {
         assertEquals(now, restoredNode.getObject(KEY_DATE));
     }
 
+
+    @Test
+    public void ignoreMissingMarshallerTest() throws IOException {
+        File tmpFile = File.createTempFile("xdata_test_imm", ".xdata");
+        tmpFile.deleteOnExit();
+
+        DataNode node = new DataNode();
+        node.setObject(KEY_CAR, new Car(8, 100, new Date()));
+
+        XData.store(node, tmpFile, true, true, new DateMarshaller());
+
+        DataNode restoredNode = XData.load(tmpFile, new DateMarshaller());
+        assertEquals(null, restoredNode.getObject(KEY_CAR));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void ignoreMissingMarshallerTest2() throws IOException {
+        File tmpFile = File.createTempFile("xdata_test_imm2", ".xdata");
+        tmpFile.deleteOnExit();
+
+        DataNode node = new DataNode();
+        node.setObject(KEY_CAR, new Car(8, 100, new Date()));
+
+        XData.store(node, tmpFile, true, false, new DateMarshaller());
+
+        XData.load(tmpFile, new DateMarshaller());
+    }
+
     @Test
     public void customMarshallerTest() throws IOException {
         File tmpFile = File.createTempFile("xdata_test3", ".xdata");

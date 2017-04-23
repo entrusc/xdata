@@ -846,6 +846,41 @@ public class XData {
     }
 
     /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     * </p>
+     * @param node
+     * @param file
+     * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
+     * @param ignoreMissingMarshallers if this is set to true then classes that can't be marshalled are
+     *                                 silently replaced with null values
+     * @param marshallers
+     * @throws IOException
+     */
+    public static void store(DataNode node, File file, boolean addChecksum, boolean ignoreMissingMarshallers,
+            AbstractDataMarshaller<?>... marshallers) throws IOException {
+        store(node, file, addChecksum, ignoreMissingMarshallers, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+
+    /**
      * stores a datanode in a xdata file using the given marshallers and adds a checksum to the
      * end of the file. For all classes other than these a special marshaller is required to map
      * the class' data to a data node deSerializedObject:
@@ -908,7 +943,44 @@ public class XData {
      */
     public static void store(DataNode node, File file, boolean addChecksum, ProgressListener progressListener,
             AbstractDataMarshaller<?>... marshallers) throws IOException {
-        store(node, new FileOutputStream(file), addChecksum, progressListener, marshallers);
+        store(node, file, addChecksum, false, progressListener, marshallers);
+    }
+
+    /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     * </p>
+     * @param node
+     * @param file
+     * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
+     * @param ignoreMissingMarshallers if this is set to true then classes that can't be marshalled are
+     *                                 silently replaced with null values
+     * @param progressListener
+     * @param marshallers
+     * @throws IOException
+     */
+    public static void store(DataNode node, File file, boolean addChecksum, boolean ignoreMissingMarshallers,
+            ProgressListener progressListener,
+            AbstractDataMarshaller<?>... marshallers) throws IOException {
+        store(node, new FileOutputStream(file), addChecksum, ignoreMissingMarshallers, progressListener, marshallers);
     }
 
 
@@ -1006,6 +1078,77 @@ public class XData {
      */
     public static void store(DataNode node, OutputStream out, boolean addChecksum, ProgressListener progressListener,
             AbstractDataMarshaller<?>... marshallers) throws IOException {
+        store(node, out, addChecksum, false, progressListener, marshallers);
+    }
+
+    /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     * </p>
+     * @param node
+     * @param out
+     * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
+     * @param ignoreMissingMarshallers if this is set to true then classes that can't be marshalled are
+     *                                 silently replaced with null values
+     * @param marshallers
+     * @throws IOException
+     */
+    public static void store(DataNode node, OutputStream out, boolean addChecksum, boolean ignoreMissingMarshallers,
+            AbstractDataMarshaller<?>... marshallers) throws IOException {
+        store(node, out, addChecksum, ignoreMissingMarshallers, DUMMY_PROGRESS_LISTENER, marshallers);
+    }
+
+    /**
+     * stores a datanode in a xdata file using the given marshallers. For all classes other
+     * than these a special marshaller is required to map the class' data to a data node
+     * deSerializedObject:
+     * <ul>
+     * <li>Boolean</li>
+     * <li>Long</li>
+     * <li>Integer</li>
+     * <li>String</li>
+     * <li>Float</li>
+     * <li>Double</li>
+     * <li>Byte</li>
+     * <li>Short</li>
+     * <li>Character</li>
+     * <li>DataNode</li>
+     * <li>List&lt;?&gt;</li>
+     * </ul>
+     * <p>
+     * Also take a look at {@link com.moebiusgames.xdata.marshaller}. There are a bunch of
+     * standard marshallers that ARE INCLUDED by default. So you don't need to add them here
+     * to work.
+     * </p>
+     * @param node
+     * @param out
+     * @param addChecksum if this is true then a sha-256 checksum is added at the end of this xdata stream
+     * @param ignoreMissingMarshallers if this is set to true then classes that can't be marshalled are
+     *                                 silently replaced with null values
+     * @param progressListener
+     * @param marshallers
+     * @throws IOException
+     */
+    public static void store(DataNode node, OutputStream out, boolean addChecksum, boolean ignoreMissingMarshallers,
+            ProgressListener progressListener, AbstractDataMarshaller<?>... marshallers) throws IOException {
         final Map<String, AbstractDataMarshaller<?>> marshallerMap = generateMarshallerMap(true, Arrays.asList(marshallers));
         marshallerMap.putAll(generateMarshallerMap(true, DEFAULT_MARSHALLERS));
 
@@ -1025,7 +1168,7 @@ public class XData {
             dOut.write(XDATA_HEADER);
 
             //serialize the node
-            serialize(marshallerMap, dOut, node, progressListener);
+            serialize(marshallerMap, dOut, node, ignoreMissingMarshallers, progressListener);
 
             if (addChecksum) {
                 final byte[] digest = messageDigestOutputStream.getDigest();
@@ -1051,12 +1194,12 @@ public class XData {
         final Class<?> clazz = object.getClass();
 
         final AbstractDataMarshaller<Object> serializer = (AbstractDataMarshaller<Object>) marshallerMap.get(clazz.getCanonicalName());
-        if (serializer == null) {
-            throw new IllegalStateException("No serializer defined for class " + clazz.getCanonicalName());
+        if (serializer != null) {
+            final DataNode node = serializer.marshal(object);
+            node.setObject(META_CLASS_NAME, serializer.getDataClassName());
+            return node;
         }
-        final DataNode node = serializer.marshal(object);
-        node.setObject(META_CLASS_NAME, serializer.getDataClassName());
-        return node;
+        return null; //no marshaller - let others decide what to do with that info
     }
 
     /**
@@ -1075,7 +1218,8 @@ public class XData {
     private static boolean serializeElement(Object element, Deque<SerializationFrame> stack, DataOutputStream dOut,
             Map<String, AbstractDataMarshaller<?>> marshallerMap,
             Map<SerializedObject, SerializedObject> serializedObjects,
-            SerializedObject testSerializedObject) throws IOException {
+            SerializedObject testSerializedObject,
+            boolean ignoreMissingMarshallers) throws IOException {
         if (element instanceof List) {
             stack.push(new ListSerializationFrame(element, (List<?>) element));
             return true;
@@ -1093,7 +1237,20 @@ public class XData {
                     if (element instanceof DataNode) {
                         dataNodeFrame = new DataNodeSerializationFrame(element, (DataNode) element);
                     } else {
-                        dataNodeFrame = new DataNodeSerializationFrame(element, marshalObject(marshallerMap, element));
+                        final DataNode marshalledObject = marshalObject(marshallerMap, element);
+                        if (marshalledObject != null) {
+                            dataNodeFrame = new DataNodeSerializationFrame(element, marshalledObject);
+                        } else {
+                            //we have no marshaller for the given object - now either raise an exception
+                            //or set the value to null ...
+                            if (!ignoreMissingMarshallers) {
+                                throw new IllegalStateException("No serializer defined for class " + element.getClass().getCanonicalName());
+                            } else {
+                                //ignore and just store null value
+                                serializePrimitive(dOut, null);
+                                return false;
+                            }
+                        }
                     }
                     stack.push(dataNodeFrame);
                     return true;
@@ -1112,7 +1269,8 @@ public class XData {
      * @throws IOException
      */
     private static void serialize(Map<String, AbstractDataMarshaller<?>> marshallerMap,
-            DataOutputStream dOut, DataNode primaryNode, ProgressListener progressListener) throws IOException {
+            DataOutputStream dOut, DataNode primaryNode, boolean ignoreMissingMarshallers,
+            ProgressListener progressListener) throws IOException {
 
         //a map containing all serialized objects. This is used
         //to make sure that we store each deSerializedObject only once.
@@ -1136,7 +1294,8 @@ public class XData {
             if (frame.hasNext()) {
                 while (frame.hasNext()) {
                     if (frame.next(stack, dOut, marshallerMap,
-                            serializedObjects, testSerializedObject)) {
+                            serializedObjects, testSerializedObject,
+                            ignoreMissingMarshallers)) {
                         if (frame == primaryDataNodeFrame) {
                             progressListener.onStep();
                         }
@@ -1422,7 +1581,8 @@ public class XData {
         public abstract boolean next(Deque<SerializationFrame> stack, DataOutputStream dOut, Map<String,
                 AbstractDataMarshaller<?>> marshallerMap,
                 Map<SerializedObject, SerializedObject> serializedObjects,
-                SerializedObject testSerializedObject) throws IOException;
+                SerializedObject testSerializedObject,
+                boolean ignoreMissingMarshallers) throws IOException;
     }
 
     private static class ListSerializationFrame extends SerializationFrame {
@@ -1448,11 +1608,12 @@ public class XData {
         public boolean next(Deque<SerializationFrame> stack, DataOutputStream dOut,
                 Map<String, AbstractDataMarshaller<?>> marshallerMap,
                 Map<SerializedObject, SerializedObject> serializedObjects,
-                SerializedObject testSerializedObject) throws IOException {
+                SerializedObject testSerializedObject,
+                boolean ignoreMissingMarshallers) throws IOException {
             final Object element = this.entries.remove(0);
 
             return serializeElement(element, stack, dOut, marshallerMap,
-                    serializedObjects, testSerializedObject);
+                    serializedObjects, testSerializedObject, ignoreMissingMarshallers);
         }
 
     }
@@ -1484,14 +1645,15 @@ public class XData {
         public boolean next(Deque<SerializationFrame> stack, DataOutputStream dOut,
                 Map<String, AbstractDataMarshaller<?>> marshallerMap,
                 Map<SerializedObject, SerializedObject> serializedObjects,
-                SerializedObject testSerializedObject) throws IOException {
+                SerializedObject testSerializedObject,
+                boolean ignoreMissingMarshallers) throws IOException {
             final Entry<String, Object> entry = entries.poll();
 
             //write the field's key
             dOut.writeUTF(entry.getKey());
 
             return serializeElement(entry.getValue(), stack, dOut, marshallerMap,
-                    serializedObjects, testSerializedObject);
+                    serializedObjects, testSerializedObject, ignoreMissingMarshallers);
         }
 
     }
