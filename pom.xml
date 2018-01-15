@@ -17,13 +17,13 @@
             <url>http://www.gnu.org/licenses/lgpl.html</url>
         </license>
     </licenses>
-    
+
     <scm>
-        <connection>scm:git:https://github.com/entrusc/xdata</connection>
-        <developerConnection>scm:git:https://github.com/entrusc/xdata</developerConnection>
-        <url>scm:git:https://github.com/entrusc/xdata</url>
-    </scm>   
-    
+        <url>https://github.com/entrusc/xdata</url>
+        <connection>scm:git:git@github.com/entrusc/xdata.git</connection>
+        <developerConnection>scm:git:git@github.com/entrusc/xdata.git</developerConnection>
+    </scm>
+
     <developers>
         <developer>
             <id>moebius</id>
@@ -38,19 +38,19 @@
             </roles>
             <timezone>+1</timezone>
         </developer>
-    </developers>         
+    </developers>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <netbeans.hint.license>lgpl21</netbeans.hint.license>
     </properties>
-    
+
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>9</version>
-    </parent>   
-    
+    </parent>
+
     <build>
         <pluginManagement>
             <plugins>
@@ -62,14 +62,14 @@
                         <source>1.8</source>
                         <target>1.8</target>
                     </configuration>
-                </plugin>        
+                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <configuration>
                         <additionalparam>-Xdoclint:none</additionalparam>
                     </configuration>
-                </plugin>                           
+                </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
@@ -81,9 +81,9 @@
                     </configuration>
                 </plugin>
             </plugins>
-        </pluginManagement>        
+        </pluginManagement>
     </build>
-    
+
     <profiles>
         <profile>
             <id>release</id>
@@ -132,7 +132,7 @@
                 </plugins>
             </build>
         </profile>
-    </profiles>    
+    </profiles>
 
     <dependencies>
         <dependency>
