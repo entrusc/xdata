@@ -41,16 +41,17 @@ import java.util.function.Supplier;
  * types (see also: type erasure).
  * </p>
  * @author Florian Frankenberger
+ * @param <M>
  */
-public class MapMarshaller implements DataMarshaller<Map<?, ?>>{
+public class MapMarshaller<M extends Map> implements DataMarshaller<M>{
 
     private final List<AbstractDataMarshaller<?>> marshallers = new ArrayList<>();
     private final ListDataKey<Tupel<Object, Object>> DATA_KEY = ListDataKey.create("data", new GenericType<Tupel<Object, Object>>() {});
 
-    private final Supplier<Map<?, ?>> supplier;
-    private final Class<? extends Map> mapClass;
+    private final Supplier<M> supplier;
+    private final Class<M> mapClass;
 
-    public MapMarshaller(Supplier<Map<?, ?>> supplier, Class<? extends Map> mapClass,
+    public MapMarshaller(Supplier<M> supplier, Class<M> mapClass,
             AbstractDataMarshaller<?>... marshallers) {
         this.supplier = supplier;
         this.mapClass = mapClass;
@@ -60,8 +61,8 @@ public class MapMarshaller implements DataMarshaller<Map<?, ?>>{
     }
 
     @Override
-    public Class<Map<?, ?>> getDataClass() {
-        return (Class<Map<?, ?>>) mapClass;
+    public Class<M> getDataClass() {
+        return mapClass;
     }
 
     @Override
@@ -75,10 +76,11 @@ public class MapMarshaller implements DataMarshaller<Map<?, ?>>{
     }
 
     @Override
-    public DataNode marshal(Map<?, ?> object) {
+    public DataNode marshal(M object) {
+        final Map<?, ?> map = (Map<?, ?>) object;
         final DataNode dataNode = new DataNode();
         final List<Tupel<Object, Object>> tupels = new ArrayList<>();
-        for (Entry<?, ?> entry : object.entrySet()) {
+        for (Entry entry : map.entrySet()) {
             tupels.add(new Tupel<>(entry.getKey(), entry.getValue()));
         }
         dataNode.setObjectList(DATA_KEY, tupels);
@@ -86,14 +88,14 @@ public class MapMarshaller implements DataMarshaller<Map<?, ?>>{
     }
 
     @Override
-    public Map<?, ?> unMarshal(DataNode node) {
+    public M unMarshal(DataNode node) {
         Map<Object, Object> map = (Map<Object, Object>) supplier.get();
         List<Tupel<Object, Object>> tupels = node.getMandatoryObjectList(DATA_KEY);
 
         for (Tupel<Object, Object> tupel : tupels) {
             map.put(tupel.getT1(), tupel.getT2());
         }
-        return map;
+        return (M) map;
     }
 
     private static class Tupel<T1, T2> {

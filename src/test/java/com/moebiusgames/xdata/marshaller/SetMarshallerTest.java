@@ -24,8 +24,9 @@ import com.moebiusgames.xdata.XData;
 import com.moebiusgames.xdata.type.GenericType;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
@@ -33,56 +34,55 @@ import static org.junit.Assert.assertEquals;
  *
  * @author Florian Frankenberger
  */
-public class MapMarshallerTest {
+public class SetMarshallerTest {
 
-    private static final DataKey<HashMap<Integer, String>> KEY_MAP
-            = DataKey.create("map", new GenericType<HashMap<Integer, String>>() {});
+    private static final DataKey<HashSet<String>> KEY_MAP = DataKey.create("set", new GenericType<HashSet<String>>() {});
 
-    public MapMarshallerTest() {
+    public SetMarshallerTest() {
     }
 
     @Test
     public void marshallingTest() throws IOException {
-        File tmpFile = File.createTempFile("xdata_hashmap_test", ".xdata");
+        File tmpFile = File.createTempFile("xdata_hashset_test", ".xdata");
         tmpFile.deleteOnExit();
 
-        MapMarshaller<HashMap> serializer = new MapMarshaller<>(HashMap::new, HashMap.class);
+        SetMarshaller<HashSet> serializer = new SetMarshaller<>(HashSet::new, HashSet.class);
 
-        HashMap<Integer, String> map = new HashMap<>();
-        map.put(1, "Hello World?");
-        map.put(2, "Second Entry");
+        HashSet<String> set = new HashSet<>();
+        set.add("Hello World?");
+        set.add("Second Entry");
 
         DataNode dataNode = new DataNode();
-        dataNode.setObject(KEY_MAP, map);
+        dataNode.setObject(KEY_MAP, set);
         XData.store(dataNode, tmpFile, serializer);
 
         DataNode restoredNode = XData.load(tmpFile, serializer);
-        HashMap<Integer, String> restoredMap = restoredNode.getMandatoryObject(KEY_MAP);
+        Set<String> restoredSet = restoredNode.getMandatoryObject(KEY_MAP);
 
-        assertEquals(map, restoredMap);
+        assertEquals(set, restoredSet);
     }
 
     @Test
     public void marshallingTestWithDifferentMaps() throws IOException {
-        File tmpFile = File.createTempFile("xdata_hashmap_test", ".xdata");
+        File tmpFile = File.createTempFile("xdata_hashset_test", ".xdata");
         tmpFile.deleteOnExit();
 
-        MapMarshaller serializer = new MapMarshaller(HashMap::new, HashMap.class);
-        MapMarshaller serializer2 = new MapMarshaller(LinkedHashMap::new, LinkedHashMap.class);
+        SetMarshaller serializer = new SetMarshaller(HashSet::new, HashSet.class);
+        SetMarshaller serializer2 = new SetMarshaller(LinkedHashSet::new, LinkedHashSet.class);
 
-        HashMap<Integer, String> map = new HashMap<>();
-        map.put(1, "Hello World?");
-        map.put(2, "Second Entry");
+        HashSet<String> map = new HashSet<>();
+        map.add("Hello World?");
+        map.add("Second Entry");
 
         DataNode dataNode = new DataNode();
         dataNode.setObject(KEY_MAP, map);
         XData.store(dataNode, tmpFile, serializer);
 
         DataNode restoredNode = XData.load(tmpFile, serializer2);
-        HashMap<Integer, String> restoredMap = restoredNode.getMandatoryObject(KEY_MAP);
+        Set<String> restoredSet = restoredNode.getMandatoryObject(KEY_MAP);
 
-        assertEquals(LinkedHashMap.class, restoredMap.getClass());
-        assertEquals(map, restoredMap);
+        assertEquals(LinkedHashSet.class, restoredSet.getClass());
+        assertEquals(map, restoredSet);
     }
 
 
