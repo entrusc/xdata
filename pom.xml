@@ -20,8 +20,8 @@
 
     <scm>
         <url>https://github.com/entrusc/xdata</url>
-        <connection>scm:git:git@github.com/entrusc/xdata.git</connection>
-        <developerConnection>scm:git:git@github.com/entrusc/xdata.git</developerConnection>
+        <connection>scm:git:git@github.com:entrusc/xdata.git</connection>
+        <developerConnection>scm:git:git@github.com:entrusc/xdata.git</developerConnection>
     </scm>
 
     <developers>
