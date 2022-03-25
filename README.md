@@ -2,7 +2,7 @@ xdata
 =====
 xdata is a java library for storing and loading xdata files. The xdata file format 
 was initially developed as an universal file format for the science fiction voxel 
-game [Xcylin](http://xcylin.com) but is suitable for a lot of other applications
+game [Exotic Matter](http://exoticmatter.io) but is suitable for a lot of other applications
 as well. 
 
 xdata format highlights:
